@@ -16,6 +16,6 @@ class MainActivity : Activity() {
             View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
             View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         )
-        setContentView(NexoraWorldView(this))
+        setContentView(Nexora3DView(this))
     }
 }
