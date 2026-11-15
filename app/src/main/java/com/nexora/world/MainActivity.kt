@@ -18,6 +18,7 @@ class MainActivity : Activity() {
             View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
             View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         )
+        RemoteGameConfig.refresh(this)
         gameView = Nexora3DView(this)
         setContentView(gameView)
     }
