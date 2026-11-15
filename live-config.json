@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 2,
+  "version": 3,
   "movement": {
     "moveSpeed": 3.7,
     "acceleration": 9.5,
@@ -13,5 +13,10 @@
     "footLift": 0.16,
     "kneeBendDegrees": 24,
     "bodyBounce": 0.035
+  },
+  "visual": {
+    "cameraDistance": 7.2,
+    "cameraHeight": 4.1,
+    "avatarScale": 1.0
   }
 }
