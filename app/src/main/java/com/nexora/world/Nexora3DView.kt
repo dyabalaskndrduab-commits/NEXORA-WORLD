@@ -110,7 +110,9 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
             val x = event.x; val y = event.y
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                    if (x < width * .42f && y > height * .48f) {
+                    val downX = event.getX(event.actionIndex)
+                    val downY = event.getY(event.actionIndex)
+                    if (downX < width * .48f && downY > height * .38f) {
                         movePointer = true
                         movePointerId = event.getPointerId(event.actionIndex)
                         joyCenterX = event.getX(event.actionIndex)
@@ -270,7 +272,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         pz = (pz + velocityZ * dt).coerceIn(-20f, 18f)
         val speed = sqrt(velocityX*velocityX + velocityZ*velocityZ)
         if (speed > .10f) {
-            val targetYaw = atan2(velocityX, velocityZ)
+            val targetYaw = atan2(-velocityX, -velocityZ)
             val delta = ((targetYaw - yaw + PI.toFloat()) % (2f*PI.toFloat()) + 2f*PI.toFloat()) % (2f*PI.toFloat()) - PI.toFloat()
             yaw += delta * (dt * 10f).coerceAtMost(1f)
             walk += dt * (5.8f + speed * 2.2f)
