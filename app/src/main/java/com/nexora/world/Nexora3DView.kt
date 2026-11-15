@@ -237,9 +237,10 @@ private class WorldRenderer : GLSurfaceView.Renderer {
             walk += dt * 10f
         }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
-        val cameraX = px - sin(yaw) * cos(look) * 7.2f
-        val cameraZ = pz + cos(yaw) * cos(look) * 7.2f
-        val cameraY = 4.0f + abs(sin(look)) * 2.5f
+        val cameraAngle = yaw + look
+        val cameraX = px - sin(cameraAngle) * 7.2f
+        val cameraZ = pz + cos(cameraAngle) * 7.2f
+        val cameraY = 4.0f
         Matrix.setLookAtM(view, 0, cameraX, cameraY, cameraZ, px, 1.05f, pz, 0f, 1f, 0f)
         Matrix.multiplyMM(vp, 0, projection, 0, view, 0)
         GLES20.glUseProgram(program)
