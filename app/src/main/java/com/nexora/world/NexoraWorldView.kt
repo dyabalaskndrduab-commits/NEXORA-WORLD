@@ -400,6 +400,10 @@ class NexoraWorldView(context: Context) : View(context) {
             p.color = Color.rgb(65, 211, 190)
             c.drawRoundRect(w * .66f, h * .14f, w * (.66f + .28f * min(1f, crystals / 5f)), h * .155f, 8f, 8f, p)
         }
+        p.color = Color.rgb(112, 67, 220)
+        c.drawRoundRect(w * .48f, h * .035f, w * .61f, h * .13f, 12f, 12f, p)
+        p.color = Color.WHITE; p.textAlign = Paint.Align.CENTER; p.textSize = h * .023f
+        c.drawText("WARDROBE", w * .545f, h * .095f, p)
         if (toastTimer > 0f) {
             p.color = Color.argb(225, 13, 22, 38)
             c.drawRoundRect(w * .27f, h * .205f, w * .73f, h * .27f, 14f, 14f, p)
@@ -479,7 +483,7 @@ class NexoraWorldView(context: Context) : View(context) {
                     if (event.x > w*.48f && event.y >= h*.34f && event.y <= h*.80f) { say(if(wardrobeCategory==0) "Black NEXORA hoodie is equipped" else "More items in this category are coming soon"); return true }
                     return true
                 }
-                if (event.x > w*.70f && event.x < w*.91f && event.y < h*.20f) { wardrobeOpen=true; joystick[0]=0f; joystick[1]=0f; invalidate(); return true }
+                if (event.x > w*.47f && event.x < w*.62f && event.y < h*.16f) { wardrobeOpen=true; joystick[0]=0f; joystick[1]=0f; invalidate(); return true }
                 if (event.x > w * .90f && event.y < h * .17f) {
                     paused = !paused
                     say(if (paused) "Game paused" else "Welcome back!")
