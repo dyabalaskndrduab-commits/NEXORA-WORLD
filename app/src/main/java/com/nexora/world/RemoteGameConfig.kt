@@ -5,7 +5,9 @@ import android.util.Log
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-import kotlin.concurrent.thread
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 /** Loads safe gameplay tuning remotely; native code changes still require an APK update. */
 object RemoteGameConfig {
@@ -22,31 +24,40 @@ object RemoteGameConfig {
     @Volatile var kneeBendDegrees = 24f
     @Volatile var bodyBounce = 0.035f
 
-    fun refresh(context: Context) {
+    @Volatile private var poller: ScheduledExecutorService? = null
+
+    @Synchronized fun refresh(context: Context) {
         val prefs = context.applicationContext.getSharedPreferences("nexora_live_config", Context.MODE_PRIVATE)
         applyJson(prefs.getString("cached_json", null))
-        thread(name = "nexora-config") {
-            var connection: HttpURLConnection? = null
-            try {
-                connection = (URL(CONFIG_URL).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 7000
-                    readTimeout = 7000
-                    requestMethod = "GET"
-                    setRequestProperty("Cache-Control", "no-cache")
-                }
-                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val body = connection.inputStream.bufferedReader().use { it.readText() }
-                    val parsed = JSONObject(body)
-                    if (parsed.optInt("schemaVersion", 0) == 1) {
-                        prefs.edit().putString("cached_json", body).apply()
-                        applyJson(body)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w("NEXORA_CONFIG", "Using last known movement settings", e)
-            } finally {
-                connection?.disconnect()
+        if (poller != null) return
+        poller = Executors.newSingleThreadScheduledExecutor { task ->
+            Thread(task, "nexora-live-config").apply { isDaemon = true }
+        }.also { executor ->
+            executor.scheduleWithFixedDelay({ downloadConfig(prefs) }, 0, 45, TimeUnit.SECONDS)
+        }
+    }
+
+    private fun downloadConfig(prefs: android.content.SharedPreferences) {
+        var connection: HttpURLConnection? = null
+        try {
+            connection = (URL(CONFIG_URL).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 7000
+                readTimeout = 7000
+                requestMethod = "GET"
+                setRequestProperty("Cache-Control", "no-cache")
             }
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val body = connection.inputStream.bufferedReader().use { it.readText() }
+                val parsed = JSONObject(body)
+                if (parsed.optInt("schemaVersion", 0) == 1) {
+                    prefs.edit().putString("cached_json", body).apply()
+                    applyJson(body)
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("NEXORA_CONFIG", "Using last known movement settings", e)
+        } finally {
+            connection?.disconnect()
         }
     }
 
