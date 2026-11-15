@@ -112,16 +112,16 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                     val downX = event.getX(event.actionIndex)
                     val downY = event.getY(event.actionIndex)
-                    if (downX < width * .48f && downY > height * .38f) {
+                    if (!movePointer && downX < width * .48f && downY > height * .38f) {
                         movePointer = true
                         movePointerId = event.getPointerId(event.actionIndex)
-                        joyCenterX = event.getX(event.actionIndex)
-                        joyCenterY = event.getY(event.actionIndex)
+                        joyCenterX = downX
+                        joyCenterY = downY
                         updateStick(joyCenterX, joyCenterY)
-                    } else {
+                    } else if (!lookPointer) {
                         lookPointer = true
                         lookPointerId = event.getPointerId(event.actionIndex)
-                        lastLookX = event.getX(event.actionIndex)
+                        lastLookX = downX
                     }
                     return true
                 }
@@ -209,7 +209,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     private var last = System.nanoTime()
 
     fun setMove(x: Float, y: Float) { moveX = x; moveY = y }
-    fun rotateCamera(amount: Float) { cameraYaw -= amount * 5.2f }
+    fun rotateCamera(amount: Float) { cameraYaw += amount * 4.4f }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(.035f, .055f, .09f, 1f)
@@ -262,20 +262,21 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         val inputX = if (rawLength > 1f) mx / rawLength else mx
         val inputY = if (rawLength > 1f) my / rawLength else my
 
-        // Camera-relative movement with acceleration, braking and smooth turning.
-        val desiredX = (cos(cameraYaw) * inputX + sin(cameraYaw) * inputY) * 4.0f * inputLength
-        val desiredZ = (-sin(cameraYaw) * inputX + cos(cameraYaw) * inputY) * 4.0f * inputLength
-        val blend = (dt * if (inputLength > .04f) 9f else 6f).coerceAtMost(1f)
+        // Camera-relative movement: joystick up follows the camera's forward vector (-Z at yaw 0).
+        // Right is (cos(yaw), 0, sin(yaw)); forward is (sin(yaw), 0, -cos(yaw)).
+        val desiredX = (cos(cameraYaw) * inputX - sin(cameraYaw) * inputY) * 4.0f * inputLength
+        val desiredZ = (sin(cameraYaw) * inputX + cos(cameraYaw) * inputY) * 4.0f * inputLength
+        val blend = (dt * if (inputLength > .04f) 11f else 7.5f).coerceAtMost(1f)
         velocityX += (desiredX - velocityX) * blend
         velocityZ += (desiredZ - velocityZ) * blend
         px = (px + velocityX * dt).coerceIn(-18f, 18f)
         pz = (pz + velocityZ * dt).coerceIn(-20f, 18f)
         val speed = sqrt(velocityX*velocityX + velocityZ*velocityZ)
-        if (speed > .10f) {
+        if (speed > .045f) {
             val targetYaw = atan2(-velocityX, -velocityZ)
             val delta = ((targetYaw - yaw + PI.toFloat()) % (2f*PI.toFloat()) + 2f*PI.toFloat()) % (2f*PI.toFloat()) - PI.toFloat()
-            yaw += delta * (dt * 10f).coerceAtMost(1f)
-            walk += dt * (5.8f + speed * 2.2f)
+            yaw += delta * (dt * 12f).coerceAtMost(1f)
+            walk += dt * (7.0f + speed * 2.0f)
         }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         val desiredCameraX = px - sin(cameraYaw) * 7.2f
@@ -357,55 +358,76 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     }
 
     private fun drawAvatar() {
-        val moving = sqrt(velocityX*velocityX + velocityZ*velocityZ) > .10f
-        val stride = if (moving) sin(walk) else 0f
-        val bob = if (moving) abs(sin(walk * 2f)) * .045f else 0f
+        val speed = sqrt(velocityX * velocityX + velocityZ * velocityZ)
+        val moving = speed > .045f
+        val stride = if (moving) sin(walk) * (speed / 4.0f).coerceIn(.18f, 1f) else 0f
+        val swingDegrees = Math.toDegrees((stride * .72f).toDouble()).toFloat()
+        val bob = if (moving) abs(sin(walk * 2f)) * .055f * (speed / 4.0f).coerceIn(.2f, 1f) else 0f
+
         fun part(x: Float, y: Float, z: Float, sx: Float, sy: Float, sz: Float,
                  color: FloatArray, rx: Float = 0f, rz: Float = 0f) {
-            Matrix.setIdentityM(model,0)
-            Matrix.translateM(model,0,px,bob,pz)
-            Matrix.rotateM(model,0,Math.toDegrees(yaw.toDouble()).toFloat(),0f,1f,0f)
-            Matrix.translateM(model,0,x,y,z)
-            if (rx != 0f) Matrix.rotateM(model,0,rx,1f,0f,0f)
-            if (rz != 0f) Matrix.rotateM(model,0,rz,0f,0f,1f)
-            Matrix.scaleM(model,0,sx,sy,sz)
-            drawMesh(sphere,sphereCount,color)
+            Matrix.setIdentityM(model, 0)
+            Matrix.translateM(model, 0, px, bob, pz)
+            Matrix.rotateM(model, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
+            Matrix.translateM(model, 0, x, y, z)
+            if (rx != 0f) Matrix.rotateM(model, 0, rx, 1f, 0f, 0f)
+            if (rz != 0f) Matrix.rotateM(model, 0, rz, 0f, 0f, 1f)
+            Matrix.scaleM(model, 0, sx, sy, sz)
+            drawMesh(sphere, sphereCount, color)
         }
 
-        // Rounded, overlapping ellipsoids create a softer humanoid silhouette.
-        // Shoes and two animated leg segments.
-        part(-.22f,.13f,-.13f,.25f,.14f,.40f,rgb(.94f,.95f,.97f),-stride*.15f)
-        part(.22f,.13f,-.13f,.25f,.14f,.40f,rgb(.94f,.95f,.97f),stride*.15f)
-        part(-.22f,.48f,0f,.17f,.43f,.18f,rgb(.035f,.045f,.065f),stride*.42f)
-        part(.22f,.48f,0f,.17f,.43f,.18f,rgb(.035f,.045f,.065f),-stride*.42f)
-        part(-.22f,.82f,0f,.16f,.34f,.17f,rgb(.045f,.052f,.072f),-stride*.36f)
-        part(.22f,.82f,0f,.16f,.34f,.17f,rgb(.045f,.052f,.072f),stride*.36f)
+        // Rotate each leg and arm around its joint, not around its own centre.
+        fun jointLimb(pivotX: Float, pivotY: Float, pivotZ: Float, offsetY: Float,
+                      sx: Float, sy: Float, sz: Float, color: FloatArray, angle: Float,
+                      offsetZ: Float = 0f) {
+            Matrix.setIdentityM(model, 0)
+            Matrix.translateM(model, 0, px, bob, pz)
+            Matrix.rotateM(model, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
+            Matrix.translateM(model, 0, pivotX, pivotY, pivotZ)
+            Matrix.rotateM(model, 0, angle, 1f, 0f, 0f)
+            Matrix.translateM(model, 0, 0f, offsetY, offsetZ)
+            Matrix.scaleM(model, 0, sx, sy, sz)
+            drawMesh(sphere, sphereCount, color)
+        }
 
-        // Oversized black hoodie, hood, shoulders, sleeves and cuffs.
-        part(0f,1.43f,0f,.43f,.58f,.29f,rgb(.025f,.033f,.052f))
-        part(0f,1.82f,.12f,.30f,.30f,.20f,rgb(.045f,.052f,.072f))
-        part(0f,1.06f,-.005f,.39f,.15f,.27f,rgb(.018f,.026f,.042f))
-        part(-.46f,1.49f,0f,.19f,.43f,.19f,rgb(.028f,.036f,.055f),0f,-.12f-stride*.20f)
-        part(.46f,1.49f,0f,.19f,.43f,.19f,rgb(.028f,.036f,.055f),0f,.12f+stride*.20f)
-        part(-.51f,1.12f,-.015f,.15f,.13f,.16f,rgb(.018f,.025f,.041f))
-        part(.51f,1.12f,-.015f,.15f,.13f,.16f,rgb(.018f,.025f,.041f))
-        part(-.55f,1.02f,-.02f,.12f,.12f,.12f,rgb(.67f,.43f,.33f))
-        part(.55f,1.02f,-.02f,.12f,.12f,.12f,rgb(.67f,.43f,.33f))
+        val darkPants = rgb(.035f, .045f, .065f)
+        val shoeWhite = rgb(.94f, .95f, .97f)
+        val leftSwing = swingDegrees
+        val rightSwing = -swingDegrees
+
+        // Legs: upper and lower segments swing in opposition with a slight knee lag.
+        jointLimb(-.22f, 1.02f, 0f, -.22f, .17f, .43f, .18f, darkPants, leftSwing)
+        jointLimb(.22f, 1.02f, 0f, -.22f, .17f, .43f, .18f, darkPants, rightSwing)
+        jointLimb(-.22f, .59f, 0f, -.18f, .145f, .34f, .15f, darkPants, -leftSwing * .48f)
+        jointLimb(.22f, .59f, 0f, -.18f, .145f, .34f, .15f, darkPants, -rightSwing * .48f)
+        jointLimb(-.22f, .22f, -.02f, -.055f, .24f, .13f, .39f, shoeWhite, -leftSwing * .20f, -.12f)
+        jointLimb(.22f, .22f, -.02f, -.055f, .24f, .13f, .39f, shoeWhite, -rightSwing * .20f, -.12f)
+
+        // Black NEXORA hoodie, hood and torso.
+        part(0f, 1.43f, 0f, .43f, .58f, .29f, rgb(.025f, .033f, .052f))
+        part(0f, 1.82f, .12f, .30f, .30f, .20f, rgb(.045f, .052f, .072f))
+        part(0f, 1.06f, -.005f, .39f, .15f, .27f, rgb(.018f, .026f, .042f))
+
+        // Arms pivot at the shoulders and counter-swing naturally against the legs.
+        jointLimb(-.40f, 1.76f, 0f, -.22f, .19f, .43f, .19f, rgb(.028f, .036f, .055f), -leftSwing * .82f)
+        jointLimb(.40f, 1.76f, 0f, -.22f, .19f, .43f, .19f, rgb(.028f, .036f, .055f), -rightSwing * .82f)
+        jointLimb(-.40f, 1.34f, 0f, -.10f, .14f, .13f, .15f, rgb(.018f, .025f, .041f), -leftSwing * .25f)
+        jointLimb(.40f, 1.34f, 0f, -.10f, .14f, .13f, .15f, rgb(.018f, .025f, .041f), -rightSwing * .25f)
 
         // Neck, face and layered black hair.
-        part(0f,2.02f,-.015f,.14f,.20f,.14f,rgb(.61f,.38f,.29f))
-        part(0f,2.37f,-.015f,.29f,.37f,.25f,rgb(.72f,.49f,.37f))
-        part(0f,2.61f,.005f,.30f,.20f,.27f,rgb(.018f,.022f,.034f))
-        part(-.20f,2.46f,.005f,.105f,.25f,.22f,rgb(.018f,.022f,.034f))
-        part(.20f,2.46f,.005f,.105f,.25f,.22f,rgb(.018f,.022f,.034f))
-        part(-.13f,2.38f,-.238f,.045f,.035f,.018f,rgb(.035f,.045f,.055f))
-        part(.13f,2.38f,-.238f,.045f,.035f,.018f,rgb(.035f,.045f,.055f))
-        part(0f,2.28f,-.255f,.07f,.025f,.018f,rgb(.42f,.22f,.19f))
+        part(0f, 2.02f, -.015f, .14f, .20f, .14f, rgb(.61f, .38f, .29f))
+        part(0f, 2.37f, -.015f, .29f, .37f, .25f, rgb(.72f, .49f, .37f))
+        part(0f, 2.61f, .005f, .30f, .20f, .27f, rgb(.018f, .022f, .034f))
+        part(-.20f, 2.46f, .005f, .105f, .25f, .22f, rgb(.018f, .022f, .034f))
+        part(.20f, 2.46f, .005f, .105f, .25f, .22f, rgb(.018f, .022f, .034f))
+        part(-.13f, 2.38f, -.238f, .045f, .035f, .018f, rgb(.035f, .045f, .055f))
+        part(.13f, 2.38f, -.238f, .045f, .035f, .018f, rgb(.035f, .045f, .055f))
+        part(0f, 2.28f, -.255f, .07f, .025f, .018f, rgb(.42f, .22f, .19f))
 
         // Teal NEXORA chest badge and hoodie drawstrings.
-        part(0f,1.53f,-.292f,.12f,.055f,.014f,rgb(.20f,.83f,.80f))
-        part(-.075f,1.75f,-.285f,.018f,.18f,.012f,rgb(.56f,.58f,.61f))
-        part(.075f,1.75f,-.285f,.018f,.18f,.012f,rgb(.56f,.58f,.61f))
+        part(0f, 1.53f, -.292f, .12f, .055f, .014f, rgb(.20f, .83f, .80f))
+        part(-.075f, 1.75f, -.285f, .018f, .18f, .012f, rgb(.56f, .58f, .61f))
+        part(.075f, 1.75f, -.285f, .018f, .18f, .012f, rgb(.56f, .58f, .61f))
     }
 
     private fun box(x: Float,y: Float,z: Float,sx: Float,sy: Float,sz: Float,color: FloatArray) {
