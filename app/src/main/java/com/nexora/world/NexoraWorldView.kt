@@ -331,7 +331,6 @@ class NexoraWorldView(context: Context) : View(context) {
         val step = if (moving) sin(walkPhase) * 5f * s else 0f
         val top = y - 70f * s + bob
         c.save()
-        c.scale(facing, 1f, x, y)
         // Ground shadow.
         p.color = Color.argb(75, 0, 0, 0)
         c.drawOval(x - 24f*s, y + 5f*s, x + 24f*s, y + 13f*s, p)
@@ -417,12 +416,11 @@ class NexoraWorldView(context: Context) : View(context) {
         c.drawLine(x - 3f*s, y - 52f*s + bob, x + 3f*s, y - 52f*s + bob, p)
         // Floating player nameplate.
         p.color = Color.argb(220, 18, 23, 39)
-        c.drawRoundRect(x - 32f*s, top - 14f*s, x + 32f*s, top - 1f*s, 6f*s, 6f*s, p)
+        c.drawRoundRect(x - 32f*s, y - 104f*s + bob, x + 32f*s, y - 90f*s + bob, 6f*s, 6f*s, p)
         p.color = Color.rgb(255, 218, 126)
         p.textAlign = Paint.Align.CENTER
         p.textSize = 8f*s
-        c.drawText("NEXORA", x, top - 5f*s, p)
-        c.restore()
+        c.drawText("NEXORA", x, y - 95f*s + bob, p)
     }
 
     private fun drawHud(c: Canvas, w: Float, h: Float) {
