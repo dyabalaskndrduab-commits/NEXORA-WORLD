@@ -2,22 +2,38 @@
 
 A mobile-first 2.5D social virtual world project.
 
-## Current milestone
+## Current milestone: 0.2.0 — Playable City Plaza
 
-This repository contains the Android client foundation, a lightweight realtime backend starter, and a GitHub Actions workflow for producing a debug APK.
+The Android client now includes a playable local exploration loop:
 
-### Android build
+- Touch joystick movement with animated avatar.
+- Collectible glowing crystals that respawn.
+- A five-crystal exploration quest with a coin and XP reward.
+- XP and level progression.
+- A roaming plaza visitor (Milo) with a one-time interaction reward.
+- An interact action near Milo and the fountain.
+- A temporary speed boost from the fountain.
+- On-screen coin, quest, level, toast, and pause HUD.
 
-- Android Studio: open this repository as a project.
-- JDK: 17
-- Android Gradle Plugin: 8.7.3
-- Gradle: 8.9
+This is still a single-device gameplay milestone. The collectibles, currency, quest progress, and NPC state are local to the app and reset when the app process is restarted. They are not yet synchronized to a server or other players.
 
-The GitHub Actions workflow builds `app/build/outputs/apk/debug/app-debug.apk` on pushes and pull requests.
+## Android build
 
-## Scope and status
+- Android Studio project.
+- JDK 17
+- Android Gradle Plugin 8.7.3
+- Gradle 8.9
+- Build variant: `debug`
 
-The first milestone focuses on a playable local city scene and the project/build pipeline. It is not yet a production multiplayer game. Persistent accounts, authoritative world state, moderation, content delivery, payments, and production operations require further implementation and testing.
+GitHub Actions builds `app/build/outputs/apk/debug/app-debug.apk` on pushes and pull requests.
+
+## Next milestones
+
+1. Persistent player accounts and profiles.
+2. Server-authoritative multiplayer movement and shared rooms.
+3. Real-time chat, friends, invitations, and private rooms.
+4. Avatar customization, inventory, shops, and saved progression.
+5. Moderation, reporting, and production security.
 
 ## Backend
 
