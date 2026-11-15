@@ -418,8 +418,6 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     }
 
     private fun drawAvatar() {
-        drawApprovedAvatarTexture()
-        return
         val speed = sqrt(velocityX * velocityX + velocityZ * velocityZ)
         val moving = speed > .045f
         val gaitPower = (speed / RemoteGameConfig.moveSpeed.coerceAtLeast(0.5f)).coerceIn(0f, 1f)
