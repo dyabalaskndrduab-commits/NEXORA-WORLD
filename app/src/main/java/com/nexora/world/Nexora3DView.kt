@@ -264,9 +264,9 @@ private class WorldRenderer : GLSurfaceView.Renderer {
 
         // Camera-relative movement: joystick up follows the camera's forward vector (-Z at yaw 0).
         // Right is (cos(yaw), 0, sin(yaw)); forward is (sin(yaw), 0, -cos(yaw)).
-        val desiredX = (cos(cameraYaw) * inputX - sin(cameraYaw) * inputY) * 4.0f * inputLength
+        val desiredX = (cos(cameraYaw) * inputX - sin(cameraYaw) * inputY) * RemoteGameConfig.moveSpeed * inputLength
         val desiredZ = (sin(cameraYaw) * inputX + cos(cameraYaw) * inputY) * 4.0f * inputLength
-        val blend = (dt * if (inputLength > .04f) 11f else 7.5f).coerceAtMost(1f)
+        val blend = (dt * if (inputLength > .04f) RemoteGameConfig.acceleration else RemoteGameConfig.deceleration).coerceAtMost(1f)
         velocityX += (desiredX - velocityX) * blend
         velocityZ += (desiredZ - velocityZ) * blend
         px = (px + velocityX * dt).coerceIn(-18f, 18f)
@@ -275,13 +275,13 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         if (speed > .045f) {
             val targetYaw = atan2(-velocityX, -velocityZ)
             val delta = ((targetYaw - yaw + PI.toFloat()) % (2f*PI.toFloat()) + 2f*PI.toFloat()) % (2f*PI.toFloat()) - PI.toFloat()
-            yaw += delta * (dt * 12f).coerceAtMost(1f)
-            walk += dt * (7.0f + speed * 2.0f)
+            yaw += delta * (dt * RemoteGameConfig.turnResponsiveness).coerceAtMost(1f)
+            walk += dt * (RemoteGameConfig.walkCycleBase + speed * RemoteGameConfig.walkCycleSpeed)
         }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         val desiredCameraX = px - sin(cameraYaw) * 7.2f
         val desiredCameraZ = pz + cos(cameraYaw) * 7.2f
-        val cameraBlend = (dt * 5.5f).coerceAtMost(1f)
+        val cameraBlend = (dt * RemoteGameConfig.cameraFollow).coerceAtMost(1f)
         cameraX += (desiredCameraX - cameraX) * cameraBlend
         cameraZ += (desiredCameraZ - cameraZ) * cameraBlend
         cameraY += (4.1f - cameraY) * cameraBlend
