@@ -396,45 +396,45 @@ class NexoraWorldView(context: Context) : View(context) {
 
     // Independent clothing layer: the hoodie can be equipped without replacing the base avatar.
     private fun drawNexoraHoodieLayer(c: Canvas, avatarBounds: android.graphics.RectF) {
-        val left = avatarBounds.left + avatarBounds.width * .29f
-        val right = avatarBounds.left + avatarBounds.width * .71f
-        val top = avatarBounds.top + avatarBounds.height * .39f
-        val bottom = avatarBounds.top + avatarBounds.height * .70f
+        val left = avatarBounds.left + avatarBounds.width() * .29f
+        val right = avatarBounds.left + avatarBounds.width() * .71f
+        val top = avatarBounds.top + avatarBounds.height() * .39f
+        val bottom = avatarBounds.top + avatarBounds.height() * .70f
         val cx = (left + right) / 2f
         val torso = Path().apply {
-            moveTo(left + avatarBounds.width * .035f, top + avatarBounds.height * .055f)
-            lineTo(cx - avatarBounds.width * .055f, top)
-            lineTo(cx + avatarBounds.width * .055f, top)
-            lineTo(right - avatarBounds.width * .035f, top + avatarBounds.height * .055f)
-            lineTo(right, bottom - avatarBounds.height * .025f)
-            lineTo(right - avatarBounds.width * .055f, bottom)
-            lineTo(left + avatarBounds.width * .055f, bottom)
-            lineTo(left, bottom - avatarBounds.height * .025f)
+            moveTo(left + avatarBounds.width() * .035f, top + avatarBounds.height() * .055f)
+            lineTo(cx - avatarBounds.width() * .055f, top)
+            lineTo(cx + avatarBounds.width() * .055f, top)
+            lineTo(right - avatarBounds.width() * .035f, top + avatarBounds.height() * .055f)
+            lineTo(right, bottom - avatarBounds.height() * .025f)
+            lineTo(right - avatarBounds.width() * .055f, bottom)
+            lineTo(left + avatarBounds.width() * .055f, bottom)
+            lineTo(left, bottom - avatarBounds.height() * .025f)
             close()
         }
         p.style = Paint.Style.FILL
         p.color = Color.rgb(13, 15, 23)
         c.drawPath(torso, p)
         p.color = Color.rgb(35, 38, 51)
-        p.strokeWidth = avatarBounds.width * .012f
+        p.strokeWidth = avatarBounds.width() * .012f
         p.style = Paint.Style.STROKE
         c.drawPath(torso, p)
         p.style = Paint.Style.FILL
         // Hood and shoulder seam
         p.color = Color.rgb(8, 10, 17)
-        c.drawOval(cx - avatarBounds.width * .105f, top - avatarBounds.height * .025f,
-            cx + avatarBounds.width * .105f, top + avatarBounds.height * .12f, p)
+        c.drawOval(cx - avatarBounds.width() * .105f, top - avatarBounds.height() * .025f,
+            cx + avatarBounds.width() * .105f, top + avatarBounds.height() * .12f, p)
         p.color = Color.rgb(205, 207, 220)
         p.textAlign = Paint.Align.CENTER
-        p.textSize = avatarBounds.height * .072f
-        c.drawText("♛", cx, top + avatarBounds.height * .205f, p)
+        p.textSize = avatarBounds.height() * .072f
+        c.drawText("♛", cx, top + avatarBounds.height() * .205f, p)
         p.color = Color.WHITE
-        p.textSize = avatarBounds.height * .034f
-        c.drawText("NEXORA", cx, top + avatarBounds.height * .255f, p)
+        p.textSize = avatarBounds.height() * .034f
+        c.drawText("NEXORA", cx, top + avatarBounds.height() * .255f, p)
         p.color = Color.rgb(70, 72, 88)
-        p.strokeWidth = avatarBounds.width * .008f
-        c.drawLine(cx, top + avatarBounds.height * .27f, cx,
-            bottom - avatarBounds.height * .025f, p)
+        p.strokeWidth = avatarBounds.width() * .008f
+        c.drawLine(cx, top + avatarBounds.height() * .27f, cx,
+            bottom - avatarBounds.height() * .025f, p)
     }
 
     private fun drawWardrobe(c: Canvas, w: Float, h: Float) {
