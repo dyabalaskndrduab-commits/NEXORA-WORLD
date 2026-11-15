@@ -265,7 +265,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         // Camera-relative movement: joystick up follows the camera's forward vector (-Z at yaw 0).
         // Right is (cos(yaw), 0, sin(yaw)); forward is (sin(yaw), 0, -cos(yaw)).
         val desiredX = (cos(cameraYaw) * inputX - sin(cameraYaw) * inputY) * RemoteGameConfig.moveSpeed * inputLength
-        val desiredZ = (sin(cameraYaw) * inputX + cos(cameraYaw) * inputY) * 4.0f * inputLength
+        val desiredZ = (sin(cameraYaw) * inputX + cos(cameraYaw) * inputY) * RemoteGameConfig.moveSpeed * inputLength
         val blend = (dt * if (inputLength > .04f) RemoteGameConfig.acceleration else RemoteGameConfig.deceleration).coerceAtMost(1f)
         velocityX += (desiredX - velocityX) * blend
         velocityZ += (desiredZ - velocityZ) * blend
@@ -360,9 +360,14 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     private fun drawAvatar() {
         val speed = sqrt(velocityX * velocityX + velocityZ * velocityZ)
         val moving = speed > .045f
-        val stride = if (moving) sin(walk) * (speed / 4.0f).coerceIn(.18f, 1f) else 0f
-        val swingDegrees = Math.toDegrees((stride * .72f).toDouble()).toFloat()
-        val bob = if (moving) abs(sin(walk * 2f)) * .055f * (speed / 4.0f).coerceIn(.2f, 1f) else 0f
+        val gaitPower = (speed / RemoteGameConfig.moveSpeed.coerceAtLeast(0.5f)).coerceIn(0f, 1f)
+        val stride = if (moving) sin(walk) * gaitPower else 0f
+        val swingDegrees = Math.toDegrees((stride * RemoteGameConfig.legSwingRadians).toDouble()).toFloat()
+        val leftLift = if (moving) max(0f, sin(walk)) * RemoteGameConfig.footLift * gaitPower else 0f
+        val rightLift = if (moving) max(0f, -sin(walk)) * RemoteGameConfig.footLift * gaitPower else 0f
+        val leftKnee = if (moving) max(0f, -sin(walk)) * RemoteGameConfig.kneeBendDegrees * gaitPower else 0f
+        val rightKnee = if (moving) max(0f, sin(walk)) * RemoteGameConfig.kneeBendDegrees * gaitPower else 0f
+        val bob = if (moving) abs(sin(walk * 2f)) * RemoteGameConfig.bodyBounce * gaitPower else 0f
 
         fun part(x: Float, y: Float, z: Float, sx: Float, sy: Float, sz: Float,
                  color: FloatArray, rx: Float = 0f, rz: Float = 0f) {
@@ -398,10 +403,10 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         // Legs: upper and lower segments swing in opposition with a slight knee lag.
         jointLimb(-.22f, 1.02f, 0f, -.22f, .17f, .43f, .18f, darkPants, leftSwing)
         jointLimb(.22f, 1.02f, 0f, -.22f, .17f, .43f, .18f, darkPants, rightSwing)
-        jointLimb(-.22f, .59f, 0f, -.18f, .145f, .34f, .15f, darkPants, -leftSwing * .48f)
-        jointLimb(.22f, .59f, 0f, -.18f, .145f, .34f, .15f, darkPants, -rightSwing * .48f)
-        jointLimb(-.22f, .22f, -.02f, -.055f, .24f, .13f, .39f, shoeWhite, -leftSwing * .20f, -.12f)
-        jointLimb(.22f, .22f, -.02f, -.055f, .24f, .13f, .39f, shoeWhite, -rightSwing * .20f, -.12f)
+        jointLimb(-.22f, .59f, 0f, -.18f, .145f, .34f, .15f, darkPants, -leftSwing * .20f + leftKnee)
+        jointLimb(.22f, .59f, 0f, -.18f, .145f, .34f, .15f, darkPants, -rightSwing * .20f + rightKnee)
+        jointLimb(-.22f, .22f, -.02f, -.055f + leftLift, .24f, .13f, .39f, shoeWhite, -leftSwing * .28f, -.12f)
+        jointLimb(.22f, .22f, -.02f, -.055f + rightLift, .24f, .13f, .39f, shoeWhite, -rightSwing * .28f, -.12f)
 
         // Black NEXORA hoodie, hood and torso.
         part(0f, 1.43f, 0f, .43f, .58f, .29f, rgb(.025f, .033f, .052f))
