@@ -377,20 +377,20 @@ class NexoraWorldView(context: Context) : View(context) {
         if (blackHairEquipped) {
             p.style = Paint.Style.FILL
             p.color = Color.rgb(12, 13, 19)
-            c.drawOval(b.left+b.width*.34f,b.top+b.height*.035f,b.left+b.width*.66f,b.top+b.height*.19f,p)
+            c.drawOval(b.left+b.width()*.34f,b.top+b.height()*.035f,b.left+b.width()*.66f,b.top+b.height()*.19f,p)
         }
         if (hoodieEquipped) drawNexoraHoodieLayer(c, b)
         if (blackPantsEquipped) {
             p.style = Paint.Style.FILL
             p.color = Color.rgb(16,18,27)
-            c.drawRoundRect(b.left+b.width*.36f,b.top+b.height*.69f,b.left+b.width*.49f,b.top+b.height*.93f,b.width*.025f,b.width*.025f,p)
-            c.drawRoundRect(b.left+b.width*.51f,b.top+b.height*.69f,b.left+b.width*.64f,b.top+b.height*.93f,b.width*.025f,b.width*.025f,p)
+            c.drawRoundRect(b.left+b.width()*.36f,b.top+b.height()*.69f,b.left+b.width()*.49f,b.top+b.height()*.93f,b.width()*.025f,b.width()*.025f,p)
+            c.drawRoundRect(b.left+b.width()*.51f,b.top+b.height()*.69f,b.left+b.width()*.64f,b.top+b.height()*.93f,b.width()*.025f,b.width()*.025f,p)
         }
         if (whiteSneakersEquipped) {
             p.style = Paint.Style.FILL
             p.color = Color.rgb(238,240,245)
-            c.drawRoundRect(b.left+b.width*.32f,b.top+b.height*.91f,b.left+b.width*.49f,b.top+b.height*.985f,b.width*.025f,b.width*.025f,p)
-            c.drawRoundRect(b.left+b.width*.51f,b.top+b.height*.91f,b.left+b.width*.68f,b.top+b.height*.985f,b.width*.025f,b.width*.025f,p)
+            c.drawRoundRect(b.left+b.width()*.32f,b.top+b.height()*.91f,b.left+b.width()*.49f,b.top+b.height()*.985f,b.width()*.025f,b.width()*.025f,p)
+            c.drawRoundRect(b.left+b.width()*.51f,b.top+b.height()*.91f,b.left+b.width()*.68f,b.top+b.height()*.985f,b.width()*.025f,b.width()*.025f,p)
         }
     }
 
