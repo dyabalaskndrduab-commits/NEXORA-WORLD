@@ -2,6 +2,9 @@ package com.nexora.world
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.BitmapFactory
+import android.util.Base64
+import android.opengl.GLUtils
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -185,6 +188,13 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     private var modelHandle = 0
     private var colorHandle = 0
     private var lightHandle = 0
+    private var avatarProgram = 0
+    private var avatarPositionHandle = 0
+    private var avatarUvHandle = 0
+    private var avatarMvpHandle = 0
+    private var avatarSamplerHandle = 0
+    private var avatarTexture = 0
+    private lateinit var avatarQuad: FloatBuffer
     private lateinit var cube: FloatBuffer
     private lateinit var sphere: FloatBuffer
     private var cubeCount = 0
@@ -244,6 +254,56 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         cubeCount = 36
         sphere = makeSphere()
         sphereCount = 6 * 20 * 24
+
+        // The approved NEXORA character artwork is now rendered as a textured plane
+        // inside the perspective 3D world, rather than as a HUD/screen-space image.
+        val avatarVertex = """
+            uniform mat4 uMVP;
+            attribute vec3 aPosition;
+            attribute vec2 aUV;
+            varying vec2 vUV;
+            void main() {
+              vUV = aUV;
+              gl_Position = uMVP * vec4(aPosition, 1.0);
+            }
+        """.trimIndent()
+        val avatarFragment = """
+            precision mediump float;
+            uniform sampler2D uTexture;
+            varying vec2 vUV;
+            void main() {
+              vec4 texel = texture2D(uTexture, vUV);
+              if (texel.a < 0.08) discard;
+              gl_FragColor = texel;
+            }
+        """.trimIndent()
+        avatarProgram = linkProgram(avatarVertex, avatarFragment)
+        avatarPositionHandle = GLES20.glGetAttribLocation(avatarProgram, "aPosition")
+        avatarUvHandle = GLES20.glGetAttribLocation(avatarProgram, "aUV")
+        avatarMvpHandle = GLES20.glGetUniformLocation(avatarProgram, "uMVP")
+        avatarSamplerHandle = GLES20.glGetUniformLocation(avatarProgram, "uTexture")
+        avatarQuad = floatBuffer(floatArrayOf(
+            -.68f, 0f, 0f, 0f, 1f,
+             .68f, 0f, 0f, 1f, 1f,
+             .68f, 2.8f, 0f, 1f, 0f,
+            -.68f, 0f, 0f, 0f, 1f,
+             .68f, 2.8f, 0f, 1f, 0f,
+            -.68f, 2.8f, 0f, 0f, 0f
+        ))
+        val imageBytes = Base64.decode(NexoraAvatarAsset.WEBP, Base64.DEFAULT)
+        val avatarBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            ?: throw IllegalStateException("NEXORA avatar texture could not be decoded")
+        val textureIds = IntArray(1)
+        GLES20.glGenTextures(1, textureIds, 0)
+        avatarTexture = textureIds[0]
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, avatarTexture)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, avatarBitmap, 0)
+        avatarBitmap.recycle()
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -358,6 +418,8 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     }
 
     private fun drawAvatar() {
+        drawApprovedAvatarTexture()
+        return
         val speed = sqrt(velocityX * velocityX + velocityZ * velocityZ)
         val moving = speed > .045f
         val gaitPower = (speed / RemoteGameConfig.moveSpeed.coerceAtLeast(0.5f)).coerceIn(0f, 1f)
@@ -494,6 +556,38 @@ private class WorldRenderer : GLSurfaceView.Renderer {
             part(-.22f, laceY, -.205f, .13f, .012f, .012f, rgb(.98f, .98f, 1f), 0f, 8f)
             part(.22f, laceY, -.205f, .13f, .012f, .012f, rgb(.98f, .98f, 1f), 0f, -8f)
         }
+    }
+
+    private fun drawApprovedAvatarTexture() {
+        Matrix.setIdentityM(model, 0)
+        Matrix.translateM(model, 0, px, 0f, pz)
+        Matrix.rotateM(model, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
+        Matrix.scaleM(model, 0, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale)
+        Matrix.multiplyMM(mvp, 0, vp, 0, model, 0)
+
+        GLES20.glUseProgram(avatarProgram)
+        GLES20.glUniformMatrix4fv(avatarMvpHandle, 1, false, mvp, 0)
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, avatarTexture)
+        GLES20.glUniform1i(avatarSamplerHandle, 0)
+        GLES20.glEnable(GLES20.GL_BLEND)
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        GLES20.glDisable(GLES20.GL_CULL_FACE)
+        GLES20.glEnableVertexAttribArray(avatarPositionHandle)
+        GLES20.glEnableVertexAttribArray(avatarUvHandle)
+        avatarQuad.position(0)
+        GLES20.glVertexAttribPointer(avatarPositionHandle, 3, GLES20.GL_FLOAT, false, 20, avatarQuad)
+        avatarQuad.position(3)
+        GLES20.glVertexAttribPointer(avatarUvHandle, 2, GLES20.GL_FLOAT, false, 20, avatarQuad)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6)
+        GLES20.glDisableVertexAttribArray(avatarPositionHandle)
+        GLES20.glDisableVertexAttribArray(avatarUvHandle)
+        GLES20.glEnable(GLES20.GL_CULL_FACE)
+        GLES20.glDisable(GLES20.GL_BLEND)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+        GLES20.glUseProgram(program)
+        GLES20.glEnableVertexAttribArray(positionHandle)
+        GLES20.glEnableVertexAttribArray(normalHandle)
     }
 
     private fun box(x: Float,y: Float,z: Float,sx: Float,sy: Float,sz: Float,color: FloatArray) {
