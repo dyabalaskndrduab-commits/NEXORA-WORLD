@@ -34,8 +34,8 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
         overlay.onLook = { amount -> world.renderer.rotateCamera(amount) }
     }
 
-    override fun onResume() { super.onResume(); world.onResume() }
-    override fun onPause() { world.onPause(); super.onPause() }
+    fun resumeWorld() { world.onResume() }
+    fun pauseWorld() { world.onPause() }
 
     private class WorldSurface(context: Context) : GLSurfaceView(context) {
         val renderer = WorldRenderer()
