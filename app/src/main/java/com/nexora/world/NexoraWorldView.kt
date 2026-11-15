@@ -1,6 +1,9 @@
 package com.nexora.world
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -15,6 +18,10 @@ import kotlin.math.sqrt
 
 class NexoraWorldView(context: Context) : View(context) {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val playerSprite: Bitmap by lazy {
+        val bytes = Base64.decode(NexoraAvatarAsset.WEBP, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    }
     private val avatar = floatArrayOf(.50f, .73f)
     private val joystick = floatArrayOf(0f, 0f)
     private var joystickActive = false
@@ -323,104 +330,31 @@ class NexoraWorldView(context: Context) : View(context) {
         c.drawText("MILO", x, y - 42, p)
     }
 
-    // Player's first customisable NEXORA avatar: black streetwear, crown hoodie and premium sneakers.
+    // Exact player appearance extracted from the approved NEXORA WORLD concept image.
+    // This is a rear-view sprite; movement uses a subtle bob because only one approved pose exists.
     private fun drawAvatar(c: Canvas, x: Float, y: Float, h: Float) {
-        val s = h / 520f
         val moving = sqrt(joystick[0] * joystick[0] + joystick[1] * joystick[1]) > .08f
-        val bob = if (moving) sin(walkPhase) * 2.5f * s else 0f
-        val step = if (moving) sin(walkPhase) * 5f * s else 0f
-        val top = y - 70f * s + bob
-        c.save()
-        // Ground shadow.
-        p.color = Color.argb(75, 0, 0, 0)
-        c.drawOval(x - 24f*s, y + 5f*s, x + 24f*s, y + 13f*s, p)
-
-        // Cargo trousers and articulated legs.
-        p.color = Color.rgb(25, 29, 42)
-        c.drawRoundRect(x - 15f*s, y - 4f*s + bob, x - 2f*s, y + 20f*s + step, 5f*s, 5f*s, p)
-        c.drawRoundRect(x + 2f*s, y - 4f*s + bob, x + 15f*s, y + 20f*s - step, 5f*s, 5f*s, p)
-        p.color = Color.rgb(54, 61, 78)
-        c.drawRoundRect(x - 16f*s, y + 3f*s + bob, x - 2f*s, y + 10f*s + bob, 2f*s, 2f*s, p)
-        c.drawRoundRect(x + 2f*s, y + 3f*s + bob, x + 16f*s, y + 10f*s + bob, 2f*s, 2f*s, p)
-        p.color = Color.rgb(236, 237, 241)
-        c.drawRoundRect(x - 19f*s, y + 17f*s + step, x - 1f*s, y + 25f*s + step, 4f*s, 4f*s, p)
-        c.drawRoundRect(x + 1f*s, y + 17f*s - step, x + 20f*s, y + 25f*s - step, 4f*s, 4f*s, p)
-        p.color = Color.rgb(164, 177, 192)
-        c.drawLine(x - 15f*s, y + 21f*s + step, x - 4f*s, y + 21f*s + step, p)
-        c.drawLine(x + 5f*s, y + 21f*s - step, x + 16f*s, y + 21f*s - step, p)
-
-        // Hoodie sleeves and hands.
-        p.color = Color.rgb(19, 22, 34)
-        c.drawRoundRect(x - 25f*s, y - 38f*s + bob, x - 13f*s, y - 7f*s + bob, 6f*s, 6f*s, p)
-        c.drawRoundRect(x + 13f*s, y - 38f*s + bob, x + 25f*s, y - 7f*s + bob, 6f*s, 6f*s, p)
-        p.color = Color.rgb(239, 185, 145)
-        c.drawCircle(x - 19f*s, y - 6f*s + bob, 5f*s, p)
-        c.drawCircle(x + 19f*s, y - 6f*s + bob, 5f*s, p)
-
-        // Main black hoodie with violet piping.
-        p.color = Color.rgb(24, 27, 43)
-        c.drawRoundRect(x - 18f*s, y - 48f*s + bob, x + 18f*s, y - 5f*s + bob, 9f*s, 9f*s, p)
-        p.color = Color.rgb(111, 75, 222)
-        p.style = Paint.Style.STROKE
-        p.strokeWidth = 1.6f*s
-        c.drawRoundRect(x - 18f*s, y - 48f*s + bob, x + 18f*s, y - 5f*s + bob, 9f*s, 9f*s, p)
-        p.style = Paint.Style.FILL
-        p.color = Color.rgb(9, 12, 22)
-        c.drawRoundRect(x - 11f*s, y - 48f*s + bob, x + 11f*s, y - 35f*s + bob, 7f*s, 7f*s, p)
-        // Small gold crown emblem on the chest.
-        val crown = Path().apply {
-            moveTo(x - 7f*s, y - 28f*s + bob); lineTo(x - 8f*s, y - 36f*s + bob)
-            lineTo(x - 3f*s, y - 32f*s + bob); lineTo(x, y - 38f*s + bob)
-            lineTo(x + 3f*s, y - 32f*s + bob); lineTo(x + 8f*s, y - 36f*s + bob)
-            lineTo(x + 7f*s, y - 28f*s + bob); close()
-        }
-        p.color = Color.rgb(245, 195, 76)
-        c.drawPath(crown, p)
-        p.color = Color.rgb(245, 195, 76)
-        c.drawRect(x - 7f*s, y - 27f*s + bob, x + 7f*s, y - 25f*s + bob, p)
-
-        // Neck and expressive face.
-        p.color = Color.rgb(231, 170, 132)
-        c.drawRoundRect(x - 5f*s, y - 55f*s + bob, x + 5f*s, y - 45f*s + bob, 3f*s, 3f*s, p)
-        p.color = Color.rgb(244, 194, 157)
-        c.drawOval(x - 17f*s, y - 76f*s + bob, x + 17f*s, y - 43f*s + bob, p)
-        // Ears.
-        c.drawCircle(x - 16f*s, y - 59f*s + bob, 4f*s, p)
-        c.drawCircle(x + 16f*s, y - 59f*s + bob, 4f*s, p)
-        // Layered dark hairstyle with distinct spikes.
-        p.color = Color.rgb(27, 24, 29)
-        c.drawOval(x - 18f*s, y - 81f*s + bob, x + 18f*s, y - 55f*s + bob, p)
-        val hair = Path().apply {
-            moveTo(x - 17f*s, y - 68f*s + bob)
-            lineTo(x - 20f*s, y - 82f*s + bob)
-            lineTo(x - 9f*s, y - 77f*s + bob)
-            lineTo(x - 4f*s, y - 87f*s + bob)
-            lineTo(x + 3f*s, y - 78f*s + bob)
-            lineTo(x + 13f*s, y - 84f*s + bob)
-            lineTo(x + 17f*s, y - 68f*s + bob)
-            close()
-        }
-        c.drawPath(hair, p)
-        p.color = Color.rgb(67, 49, 43)
-        c.drawLine(x - 11f*s, y - 77f*s + bob, x - 5f*s, y - 80f*s + bob, p)
-        c.drawLine(x + 2f*s, y - 78f*s + bob, x + 10f*s, y - 81f*s + bob, p)
-        // Eyes, brows and smile.
-        p.color = Color.rgb(48, 35, 31)
-        c.drawOval(x - 10f*s, y - 63f*s + bob, x - 5f*s, y - 57f*s + bob, p)
-        c.drawOval(x + 5f*s, y - 63f*s + bob, x + 10f*s, y - 57f*s + bob, p)
-        p.color = Color.WHITE
-        c.drawCircle(x - 7f*s, y - 62f*s + bob, 1.2f*s, p)
-        c.drawCircle(x + 8f*s, y - 62f*s + bob, 1.2f*s, p)
-        p.color = Color.rgb(160, 83, 75)
-        p.strokeWidth = 1.2f*s
-        c.drawLine(x - 3f*s, y - 52f*s + bob, x + 3f*s, y - 52f*s + bob, p)
-        // Floating player nameplate.
-        p.color = Color.argb(220, 18, 23, 39)
-        c.drawRoundRect(x - 32f*s, y - 104f*s + bob, x + 32f*s, y - 90f*s + bob, 6f*s, 6f*s, p)
+        val scale = h / 520f
+        val bob = if (moving) sin(walkPhase * 2f) * 2.2f * scale else sin(elapsed * 1.8f) * .7f * scale
+        val spriteHeight = 142f * scale
+        val spriteWidth = spriteHeight * playerSprite.width / playerSprite.height
+        val dst = android.graphics.RectF(
+            x - spriteWidth / 2f,
+            y - spriteHeight + bob,
+            x + spriteWidth / 2f,
+            y + bob
+        )
+        p.isFilterBitmap = true
+        p.alpha = 255
+        c.drawBitmap(playerSprite, null, dst, p)
+        p.isFilterBitmap = false
+        p.color = Color.argb(215, 18, 23, 39)
+        c.drawRoundRect(x - 23f * scale, y - spriteHeight - 13f * scale + bob,
+            x + 23f * scale, y - spriteHeight - 3f * scale + bob, 5f * scale, 5f * scale, p)
         p.color = Color.rgb(255, 218, 126)
         p.textAlign = Paint.Align.CENTER
-        p.textSize = 8f*s
-        c.drawText("NEXORA", x, y - 95f*s + bob, p)
+        p.textSize = 6.5f * scale
+        c.drawText("DEAB", x, y - spriteHeight - 6f * scale + bob, p)
     }
 
     private fun drawHud(c: Canvas, w: Float, h: Float) {
