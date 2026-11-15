@@ -39,6 +39,9 @@ class NexoraWorldView(context: Context) : View(context) {
     private var paused = false
     private var facing = 1f
     private var walkPhase = 0f
+    private var wardrobeOpen = false
+    private var wardrobeCategory = 0
+    private val wardrobePrefs = context.getSharedPreferences("nexora_avatar", Context.MODE_PRIVATE)
 
     private data class Crystal(var x: Float, var y: Float, var active: Boolean = true, var respawn: Float = 0f)
     private val crystalsInWorld = mutableListOf(
@@ -68,6 +71,7 @@ class NexoraWorldView(context: Context) : View(context) {
         lastFrame = now
         if (!paused) updateWorld(dt, w, h)
         drawWorld(canvas, w, h)
+        if (wardrobeOpen) drawWardrobe(canvas, w, h)
         postInvalidateDelayed(16)
     }
 
@@ -357,6 +361,24 @@ class NexoraWorldView(context: Context) : View(context) {
         c.drawText("DEAB", x, y - spriteHeight - 6f * scale + bob, p)
     }
 
+    private fun drawWardrobe(c: Canvas, w: Float, h: Float) {
+        p.color=Color.argb(238,7,12,27); c.drawRect(0f,0f,w,h,p)
+        p.color=Color.rgb(22,28,54); c.drawRoundRect(w*.035f,h*.045f,w*.965f,h*.95f,24f,24f,p)
+        p.color=Color.rgb(112,67,220); c.drawRoundRect(w*.055f,h*.065f,w*.945f,h*.16f,16f,16f,p)
+        p.color=Color.WHITE; p.textAlign=Paint.Align.LEFT; p.textSize=h*.043f
+        c.drawText("NEXORA  /  AVATAR STUDIO",w*.08f,h*.127f,p)
+        p.textAlign=Paint.Align.RIGHT; p.textSize=h*.028f; c.drawText("X CLOSE",w*.92f,h*.125f,p)
+        p.color=Color.rgb(38,47,78); c.drawRoundRect(w*.07f,h*.20f,w*.43f,h*.85f,18f,18f,p)
+        val sh=h*.57f; val sw=sh*playerSprite.width/playerSprite.height
+        c.drawBitmap(playerSprite,null,android.graphics.RectF(w*.25f-sw/2,h*.80f-sh,w*.25f+sw/2,h*.80f),p)
+        p.color=Color.WHITE;p.textAlign=Paint.Align.CENTER;p.textSize=h*.03f;c.drawText("YOUR AVATAR",w*.25f,h*.245f,p)
+        p.color=Color.rgb(255,211,102);p.textSize=h*.024f;c.drawText("BLACK NEXORA SET",w*.25f,h*.89f,p)
+        val tabs=arrayOf("HOODIES","PANTS","SHOES","ACCESSORIES")
+        for(i in tabs.indices){val x=w*(.49f+i*.112f);p.color=if(wardrobeCategory==i)Color.rgb(112,67,220) else Color.rgb(42,49,77);c.drawRoundRect(x,h*.20f,x+w*.102f,h*.30f,10f,10f,p);p.color=Color.WHITE;p.textSize=h*.019f;c.drawText(tabs[i],x+w*.051f,h*.26f,p)}
+        for(i in 0..5){val x=w*(.49f+(i%3)*.145f);val y=h*(.34f+(i/3)*.235f);p.color=if(i==0)Color.rgb(80,55,143) else Color.rgb(37,44,70);c.drawRoundRect(x,y,x+w*.132f,y+h*.205f,12f,12f,p);p.color=if(i==0)Color.rgb(13,16,27) else Color.rgb(65,70,91);c.drawRoundRect(x+w*.025f,y+h*.025f,x+w*.107f,y+h*.155f,10f,10f,p);p.color=Color.WHITE;p.textAlign=Paint.Align.CENTER;p.textSize=h*.023f;c.drawText(if(i==0)"CROWN" else "LOCKED",x+w*.066f,y+h*.105f,p);p.textSize=h*.017f;c.drawText(if(i==0)"EQUIPPED" else "COMING SOON",x+w*.066f,y+h*.185f,p)}
+        p.color=Color.rgb(255,197,60);c.drawRoundRect(w*.68f,h*.84f,w*.91f,h*.92f,14f,14f,p);p.color=Color.rgb(25,25,40);p.textSize=h*.027f;c.drawText("SAVE OUTFIT",w*.795f,h*.89f,p)
+    }
+
     private fun drawHud(c: Canvas, w: Float, h: Float) {
         p.color = Color.argb(220, 14, 23, 39)
         c.drawRoundRect(16f, 14f, w * .46f, h * .18f, 18f, 18f, p)
@@ -450,6 +472,14 @@ class NexoraWorldView(context: Context) : View(context) {
         val inJoystick = sqrt(dx * dx + dy * dy) < h * .17f
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                if (wardrobeOpen) {
+                    if (event.x > w*.87f && event.y < h*.17f) { wardrobeOpen=false; return true }
+                    if (event.y >= h*.20f && event.y <= h*.31f && event.x > w*.48f) { wardrobeCategory=((event.x-w*.49f)/(w*.112f)).toInt().coerceIn(0,3); invalidate(); return true }
+                    if (event.y > h*.82f && event.x > w*.65f) { wardrobePrefs.edit().putInt("equipped_hoodie",0).apply(); wardrobeOpen=false; say("Black NEXORA outfit saved!"); return true }
+                    if (event.x > w*.48f && event.y >= h*.34f && event.y <= h*.80f) { say(if(wardrobeCategory==0) "Black NEXORA hoodie is equipped" else "More items in this category are coming soon"); return true }
+                    return true
+                }
+                if (event.x > w*.70f && event.x < w*.91f && event.y < h*.20f) { wardrobeOpen=true; joystick[0]=0f; joystick[1]=0f; invalidate(); return true }
                 if (event.x > w * .90f && event.y < h * .17f) {
                     paused = !paused
                     say(if (paused) "Game paused" else "Welcome back!")
