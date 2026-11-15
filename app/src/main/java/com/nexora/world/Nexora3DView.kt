@@ -53,8 +53,11 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         private var stickX = 0f
         private var stickY = 0f
-        private var activePointer = -1
+        private var movePointerId = -1
+        private var lookPointerId = -1
         private var lastLookX = 0f
+        private var joyCenterX = 112f
+        private var joyCenterY = 0f
         private var movePointer = false
         private var lookPointer = false
 
@@ -80,7 +83,8 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
             paint.textSize = 12f
             canvas.drawText("Explore • Meet • Create", w - 204f, 68f, paint)
 
-            val cx = 112f; val cy = h - 118f
+            if (joyCenterY == 0f) { joyCenterX = 112f; joyCenterY = h - 118f }
+            val cx = joyCenterX; val cy = joyCenterY
             paint.color = 0x55313F55
             canvas.drawCircle(cx, cy, 72f, paint)
             paint.color = 0x995F718B.toInt()
@@ -108,33 +112,49 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                     if (x < width * .42f && y > height * .48f) {
                         movePointer = true
-                        activePointer = event.getPointerId(event.actionIndex)
-                        updateStick(x, y)
+                        movePointerId = event.getPointerId(event.actionIndex)
+                        joyCenterX = event.getX(event.actionIndex)
+                        joyCenterY = event.getY(event.actionIndex)
+                        updateStick(joyCenterX, joyCenterY)
                     } else {
                         lookPointer = true
-                        lastLookX = x
+                        lookPointerId = event.getPointerId(event.actionIndex)
+                        lastLookX = event.getX(event.actionIndex)
                     }
                     return true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (movePointer) {
-                        val index = event.findPointerIndex(activePointer)
+                        val index = event.findPointerIndex(movePointerId)
                         if (index >= 0) updateStick(event.getX(index), event.getY(index))
                     }
                     if (lookPointer) {
-                        val dx = x - lastLookX
-                        lastLookX = x
-                        onLook?.invoke(dx / width.coerceAtLeast(1))
+                        val index = event.findPointerIndex(lookPointerId)
+                        if (index >= 0) {
+                            val lookX = event.getX(index)
+                            val dx = lookX - lastLookX
+                            lastLookX = lookX
+                            onLook?.invoke(dx / width.coerceAtLeast(1))
+                        }
                     }
                     return true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_UP -> {
-                    if (movePointer && event.getPointerId(event.actionIndex) == activePointer) {
-                        movePointer = false; activePointer = -1
+                    val liftedId = event.getPointerId(event.actionIndex)
+                    if (movePointer && liftedId == movePointerId) {
+                        movePointer = false; movePointerId = -1
                         stickX = 0f; stickY = 0f
                         onMove?.invoke(0f, 0f)
                     }
-                    if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) lookPointer = false
+                    if (lookPointer && liftedId == lookPointerId) {
+                        lookPointer = false; lookPointerId = -1
+                    }
+                    if (event.actionMasked == MotionEvent.ACTION_CANCEL) {
+                        movePointer = false; lookPointer = false
+                        movePointerId = -1; lookPointerId = -1
+                        stickX = 0f; stickY = 0f
+                        onMove?.invoke(0f, 0f)
+                    }
                     invalidate()
                     return true
                 }
@@ -143,12 +163,12 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
         }
 
         private fun updateStick(x: Float, y: Float) {
-            val dx = x - 112f
-            val dy = y - (height - 118f)
+            val dx = x - joyCenterX
+            val dy = y - joyCenterY
             val length = sqrt(dx * dx + dy * dy).coerceAtLeast(1f)
             val scale = min(1f, 58f / length)
-            stickX = dx / length * scale
-            stickY = dy / length * scale
+            stickX = dx / 58f * scale
+            stickY = dy / 58f * scale
             onMove?.invoke(stickX, stickY)
             invalidate()
         }
@@ -174,15 +194,20 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     private val mvp = FloatArray(16)
     @Volatile private var moveX = 0f
     @Volatile private var moveY = 0f
-    @Volatile private var look = 0f
+    @Volatile private var cameraYaw = 0f
     private var px = 0f
     private var pz = 3f
+    private var velocityX = 0f
+    private var velocityZ = 0f
     private var yaw = 0f
     private var walk = 0f
+    private var cameraX = 0f
+    private var cameraY = 4f
+    private var cameraZ = 10f
     private var last = System.nanoTime()
 
     fun setMove(x: Float, y: Float) { moveX = x; moveY = y }
-    fun rotateCamera(amount: Float) { look = (look + amount * 3.0f).coerceIn(-3.14f, 3.14f) }
+    fun rotateCamera(amount: Float) { cameraYaw -= amount * 5.2f }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(.035f, .055f, .09f, 1f)
@@ -216,7 +241,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         cube = makeCube()
         cubeCount = 36
         sphere = makeSphere()
-        sphereCount = 6 * 12 * 12
+        sphereCount = 6 * 20 * 24
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -228,20 +253,36 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         val now = System.nanoTime()
         val dt = ((now - last) / 1e9).toFloat().coerceIn(0f, .05f)
         last = now
-        val mx = moveX; val my = moveY
-        if (abs(mx) + abs(my) > .08f) {
-            val moveAngle = atan2(mx, -my) + look
-            yaw = moveAngle
-            px = (px + sin(moveAngle) * dt * 4.1f).coerceIn(-18f, 18f)
-            pz = (pz - cos(moveAngle) * dt * 4.1f).coerceIn(-20f, 18f)
-            walk += dt * 10f
+        val mx = moveX.coerceIn(-1f, 1f)
+        val my = moveY.coerceIn(-1f, 1f)
+        val rawLength = sqrt(mx * mx + my * my)
+        val inputLength = rawLength.coerceAtMost(1f)
+        val inputX = if (rawLength > 1f) mx / rawLength else mx
+        val inputY = if (rawLength > 1f) my / rawLength else my
+
+        // Camera-relative movement with acceleration, braking and smooth turning.
+        val desiredX = (cos(cameraYaw) * inputX + sin(cameraYaw) * inputY) * 4.0f * inputLength
+        val desiredZ = (-sin(cameraYaw) * inputX + cos(cameraYaw) * inputY) * 4.0f * inputLength
+        val blend = (dt * if (inputLength > .04f) 9f else 6f).coerceAtMost(1f)
+        velocityX += (desiredX - velocityX) * blend
+        velocityZ += (desiredZ - velocityZ) * blend
+        px = (px + velocityX * dt).coerceIn(-18f, 18f)
+        pz = (pz + velocityZ * dt).coerceIn(-20f, 18f)
+        val speed = sqrt(velocityX*velocityX + velocityZ*velocityZ)
+        if (speed > .10f) {
+            val targetYaw = atan2(velocityX, velocityZ)
+            val delta = ((targetYaw - yaw + PI.toFloat()) % (2f*PI.toFloat()) + 2f*PI.toFloat()) % (2f*PI.toFloat()) - PI.toFloat()
+            yaw += delta * (dt * 10f).coerceAtMost(1f)
+            walk += dt * (5.8f + speed * 2.2f)
         }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
-        val cameraAngle = yaw + look
-        val cameraX = px - sin(cameraAngle) * 7.2f
-        val cameraZ = pz + cos(cameraAngle) * 7.2f
-        val cameraY = 4.0f
-        Matrix.setLookAtM(view, 0, cameraX, cameraY, cameraZ, px, 1.05f, pz, 0f, 1f, 0f)
+        val desiredCameraX = px - sin(cameraYaw) * 7.2f
+        val desiredCameraZ = pz + cos(cameraYaw) * 7.2f
+        val cameraBlend = (dt * 5.5f).coerceAtMost(1f)
+        cameraX += (desiredCameraX - cameraX) * cameraBlend
+        cameraZ += (desiredCameraZ - cameraZ) * cameraBlend
+        cameraY += (4.1f - cameraY) * cameraBlend
+        Matrix.setLookAtM(view, 0, cameraX, cameraY, cameraZ, px, 1.15f, pz, 0f, 1f, 0f)
         Matrix.multiplyMM(vp, 0, projection, 0, view, 0)
         GLES20.glUseProgram(program)
         GLES20.glEnableVertexAttribArray(positionHandle)
@@ -314,37 +355,55 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     }
 
     private fun drawAvatar() {
-        val phase = walk
-        val swing = if (abs(moveX)+abs(moveY) > .08f) sin(phase) * .48f else 0f
-        fun part(x: Float, y: Float, z: Float, sx: Float, sy: Float, sz: Float, color: FloatArray, rx: Float = 0f) {
+        val moving = sqrt(velocityX*velocityX + velocityZ*velocityZ) > .10f
+        val stride = if (moving) sin(walk) else 0f
+        val bob = if (moving) abs(sin(walk * 2f)) * .045f else 0f
+        fun part(x: Float, y: Float, z: Float, sx: Float, sy: Float, sz: Float,
+                 color: FloatArray, rx: Float = 0f, rz: Float = 0f) {
             Matrix.setIdentityM(model,0)
-            Matrix.translateM(model,0,px,0f,pz)
+            Matrix.translateM(model,0,px,bob,pz)
             Matrix.rotateM(model,0,Math.toDegrees(yaw.toDouble()).toFloat(),0f,1f,0f)
             Matrix.translateM(model,0,x,y,z)
             if (rx != 0f) Matrix.rotateM(model,0,rx,1f,0f,0f)
+            if (rz != 0f) Matrix.rotateM(model,0,rz,0f,0f,1f)
             Matrix.scaleM(model,0,sx,sy,sz)
-            drawMesh(cube,cubeCount,color)
+            drawMesh(sphere,sphereCount,color)
         }
-        // White sneakers, black trousers and swinging legs.
-        part(-.23f,.16f,0f,.34f,.24f,.52f,rgb(.92f,.94f,.96f),swing*32f)
-        part(.23f,.16f,0f,.34f,.24f,.52f,rgb(.92f,.94f,.96f),-swing*32f)
-        part(-.23f,.57f,0f,.29f,.72f,.34f,rgb(.035f,.045f,.065f),swing*32f)
-        part(.23f,.57f,0f,.29f,.72f,.34f,rgb(.035f,.045f,.065f),-swing*32f)
-        // Hoodie torso, hood and arms.
-        part(0f,1.42f,0f,.92f,1.02f,.52f,rgb(.025f,.035f,.055f))
-        part(0f,1.92f,.24f,.58f,.55f,.20f,rgb(.045f,.055f,.075f))
-        part(-.59f,1.43f,0f,.27f,.88f,.30f,rgb(.025f,.035f,.055f),-swing*38f)
-        part(.59f,1.43f,0f,.27f,.88f,.30f,rgb(.025f,.035f,.055f),swing*38f)
-        // Neck, face and black styled hair: clearly visible when camera is orbited.
-        part(0f,2.04f,-.02f,.25f,.24f,.25f,rgb(.63f,.39f,.28f))
-        part(0f,2.42f,-.02f,.58f,.70f,.48f,rgb(.70f,.48f,.36f))
-        part(0f,2.72f,.015f,.62f,.24f,.52f,rgb(.018f,.022f,.032f))
-        part(-.25f,2.52f,.01f,.12f,.42f,.48f,rgb(.018f,.022f,.032f))
-        part(.25f,2.52f,.01f,.12f,.42f,.48f,rgb(.018f,.022f,.032f))
-        // Eyes and small NEXORA chest emblem.
-        part(-.13f,2.46f,-.265f,.055f,.055f,.025f,rgb(.035f,.045f,.055f))
-        part(.13f,2.46f,-.265f,.055f,.055f,.025f,rgb(.035f,.045f,.055f))
-        part(0f,1.55f,-.268f,.22f,.10f,.025f,rgb(.20f,.83f,.80f))
+
+        // Rounded, overlapping ellipsoids create a softer humanoid silhouette.
+        // Shoes and two animated leg segments.
+        part(-.22f,.13f,-.13f,.25f,.14f,.40f,rgb(.94f,.95f,.97f),-stride*.15f)
+        part(.22f,.13f,-.13f,.25f,.14f,.40f,rgb(.94f,.95f,.97f),stride*.15f)
+        part(-.22f,.48f,0f,.17f,.43f,.18f,rgb(.035f,.045f,.065f),stride*.42f)
+        part(.22f,.48f,0f,.17f,.43f,.18f,rgb(.035f,.045f,.065f),-stride*.42f)
+        part(-.22f,.82f,0f,.16f,.34f,.17f,rgb(.045f,.052f,.072f),-stride*.36f)
+        part(.22f,.82f,0f,.16f,.34f,.17f,rgb(.045f,.052f,.072f),stride*.36f)
+
+        // Oversized black hoodie, hood, shoulders, sleeves and cuffs.
+        part(0f,1.43f,0f,.43f,.58f,.29f,rgb(.025f,.033f,.052f))
+        part(0f,1.82f,.12f,.30f,.30f,.20f,rgb(.045f,.052f,.072f))
+        part(0f,1.06f,-.005f,.39f,.15f,.27f,rgb(.018f,.026f,.042f))
+        part(-.46f,1.49f,0f,.19f,.43f,.19f,rgb(.028f,.036f,.055f),0f,-.12f-stride*.20f)
+        part(.46f,1.49f,0f,.19f,.43f,.19f,rgb(.028f,.036f,.055f),0f,.12f+stride*.20f)
+        part(-.51f,1.12f,-.015f,.15f,.13f,.16f,rgb(.018f,.025f,.041f))
+        part(.51f,1.12f,-.015f,.15f,.13f,.16f,rgb(.018f,.025f,.041f))
+        part(-.55f,1.02f,-.02f,.12f,.12f,.12f,rgb(.67f,.43f,.33f))
+        part(.55f,1.02f,-.02f,.12f,.12f,.12f,rgb(.67f,.43f,.33f))
+
+        // Neck, face and layered black hair.
+        part(0f,2.02f,-.015f,.14f,.20f,.14f,rgb(.61f,.38f,.29f))
+        part(0f,2.37f,-.015f,.29f,.37f,.25f,rgb(.72f,.49f,.37f))
+        part(0f,2.61f,.005f,.30f,.20f,.27f,rgb(.018f,.022f,.034f))
+        part(-.20f,2.46f,.005f,.105f,.25f,.22f,rgb(.018f,.022f,.034f))
+        part(.20f,2.46f,.005f,.105f,.25f,.22f,rgb(.018f,.022f,.034f))
+        part(-.13f,2.38f,-.238f,.045f,.035f,.018f,rgb(.035f,.045f,.055f))
+        part(.13f,2.38f,-.238f,.045f,.035f,.018f,rgb(.035f,.045f,.055f))
+        part(0f,2.28f,-.255f,.07f,.025f,.018f,rgb(.42f,.22f,.19f))
+
+        // Teal NEXORA chest badge and hoodie drawstrings.
+        part(0f,1.53f,-.292f,.12f,.055f,.014f,rgb(.20f,.83f,.80f))
+        part(-.075f,1.75f,-.285f,.018f,.18f,.012f,rgb(.56f,.58f,.61f))
+        part(.075f,1.75f,-.285f,.018f,.18f,.012f,rgb(.56f,.58f,.61f))
     }
 
     private fun box(x: Float,y: Float,z: Float,sx: Float,sy: Float,sz: Float,color: FloatArray) {
@@ -399,7 +458,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
 
     private fun makeSphere(): FloatBuffer {
         val data=ArrayList<Float>()
-        val lat=12; val lon=12
+        val lat=20; val lon=24
         for (i in 0 until lat) {
             val a1=PI*i/lat; val a2=PI*(i+1)/lat
             for (j in 0 until lon) {
