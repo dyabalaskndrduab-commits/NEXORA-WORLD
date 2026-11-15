@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "movement": {
+    "moveSpeed": 4,
+    "acceleration": 11,
+    "deceleration": 7.5,
+    "turnResponsiveness": 12,
+    "walkCycleBase": 7,
+    "walkCycleSpeed": 2,
+    "cameraFollow": 5.5
+  }
+}
