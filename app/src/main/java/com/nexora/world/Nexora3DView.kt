@@ -279,12 +279,12 @@ private class WorldRenderer : GLSurfaceView.Renderer {
             walk += dt * (RemoteGameConfig.walkCycleBase + speed * RemoteGameConfig.walkCycleSpeed)
         }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
-        val desiredCameraX = px - sin(cameraYaw) * 7.2f
-        val desiredCameraZ = pz + cos(cameraYaw) * 7.2f
+        val desiredCameraX = px - sin(cameraYaw) * RemoteGameConfig.cameraDistance
+        val desiredCameraZ = pz + cos(cameraYaw) * RemoteGameConfig.cameraDistance
         val cameraBlend = (dt * RemoteGameConfig.cameraFollow).coerceAtMost(1f)
         cameraX += (desiredCameraX - cameraX) * cameraBlend
         cameraZ += (desiredCameraZ - cameraZ) * cameraBlend
-        cameraY += (4.1f - cameraY) * cameraBlend
+        cameraY += (RemoteGameConfig.cameraHeight - cameraY) * cameraBlend
         Matrix.setLookAtM(view, 0, cameraX, cameraY, cameraZ, px, 1.15f, pz, 0f, 1f, 0f)
         Matrix.multiplyMM(vp, 0, projection, 0, view, 0)
         GLES20.glUseProgram(program)
@@ -374,6 +374,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
             Matrix.setIdentityM(model, 0)
             Matrix.translateM(model, 0, px, bob, pz)
             Matrix.rotateM(model, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
+            Matrix.scaleM(model, 0, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale)
             Matrix.translateM(model, 0, x, y, z)
             if (rx != 0f) Matrix.rotateM(model, 0, rx, 1f, 0f, 0f)
             if (rz != 0f) Matrix.rotateM(model, 0, rz, 0f, 0f, 1f)
@@ -388,6 +389,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
             Matrix.setIdentityM(model, 0)
             Matrix.translateM(model, 0, px, bob, pz)
             Matrix.rotateM(model, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
+            Matrix.scaleM(model, 0, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale)
             Matrix.translateM(model, 0, pivotX, pivotY, pivotZ)
             Matrix.rotateM(model, 0, angle, 1f, 0f, 0f)
             Matrix.translateM(model, 0, 0f, offsetY, offsetZ)
