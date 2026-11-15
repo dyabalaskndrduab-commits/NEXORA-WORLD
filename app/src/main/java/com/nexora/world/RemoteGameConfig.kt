@@ -19,6 +19,9 @@ object RemoteGameConfig {
     @Volatile var walkCycleBase = 7.0f
     @Volatile var walkCycleSpeed = 2.0f
     @Volatile var cameraFollow = 5.5f
+    @Volatile var cameraDistance = 7.2f
+    @Volatile var cameraHeight = 4.1f
+    @Volatile var avatarScale = 1.0f
     @Volatile var legSwingRadians = 0.62f
     @Volatile var footLift = 0.16f
     @Volatile var kneeBendDegrees = 24f
@@ -78,6 +81,12 @@ object RemoteGameConfig {
             footLift = movement.optDouble("footLift", footLift.toDouble()).toFloat().coerceIn(0.04f, 0.28f)
             kneeBendDegrees = movement.optDouble("kneeBendDegrees", kneeBendDegrees.toDouble()).toFloat().coerceIn(5f, 40f)
             bodyBounce = movement.optDouble("bodyBounce", bodyBounce.toDouble()).toFloat().coerceIn(0.005f, 0.08f)
+            val visual = json.optJSONObject("visual")
+            if (visual != null) {
+                cameraDistance = visual.optDouble("cameraDistance", cameraDistance.toDouble()).toFloat().coerceIn(5f, 11f)
+                cameraHeight = visual.optDouble("cameraHeight", cameraHeight.toDouble()).toFloat().coerceIn(2.8f, 6f)
+                avatarScale = visual.optDouble("avatarScale", avatarScale.toDouble()).toFloat().coerceIn(0.85f, 1.2f)
+            }
         } catch (e: Exception) {
             Log.w("NEXORA_CONFIG", "Invalid remote config ignored", e)
         }
