@@ -424,10 +424,69 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         part(.13f, 2.38f, -.238f, .045f, .035f, .018f, rgb(.035f, .045f, .055f))
         part(0f, 2.28f, -.255f, .07f, .025f, .018f, rgb(.42f, .22f, .19f))
 
-        // Teal NEXORA chest badge and hoodie drawstrings.
-        part(0f, 1.53f, -.292f, .12f, .055f, .014f, rgb(.20f, .83f, .80f))
-        part(-.075f, 1.75f, -.285f, .018f, .18f, .012f, rgb(.56f, .58f, .61f))
-        part(.075f, 1.75f, -.285f, .018f, .18f, .012f, rgb(.56f, .58f, .61f))
+        // Signature chibi face: large glossy eyes, irises, highlights, brows and smile.
+        val skin = rgb(.76f, .52f, .40f)
+        val hair = rgb(.018f, .022f, .034f)
+        val hairLight = rgb(.055f, .060f, .082f)
+        part(-.285f, 2.38f, -.015f, .065f, .12f, .09f, skin)
+        part(.285f, 2.38f, -.015f, .065f, .12f, .09f, skin)
+        part(-.115f, 2.405f, -.244f, .085f, .112f, .035f, rgb(.98f, .98f, .96f))
+        part(.115f, 2.405f, -.244f, .085f, .112f, .035f, rgb(.98f, .98f, .96f))
+        part(-.108f, 2.402f, -.275f, .054f, .079f, .024f, rgb(.30f, .17f, .11f))
+        part(.122f, 2.402f, -.275f, .054f, .079f, .024f, rgb(.30f, .17f, .11f))
+        part(-.108f, 2.401f, -.294f, .030f, .052f, .014f, rgb(.012f, .014f, .020f))
+        part(.122f, 2.401f, -.294f, .030f, .052f, .014f, rgb(.012f, .014f, .020f))
+        part(-.127f, 2.438f, -.308f, .020f, .024f, .010f, rgb(1f, 1f, 1f))
+        part(.103f, 2.438f, -.308f, .020f, .024f, .010f, rgb(1f, 1f, 1f))
+        part(-.115f, 2.535f, -.238f, .105f, .035f, .045f, hair, 0f, -9f)
+        part(.115f, 2.535f, -.238f, .105f, .035f, .045f, hair, 0f, 9f)
+        part(0f, 2.245f, -.258f, .075f, .018f, .014f, rgb(.55f, .25f, .22f))
+        part(-.19f, 2.30f, -.222f, .055f, .035f, .018f, rgb(.86f, .43f, .38f))
+        part(.19f, 2.30f, -.222f, .055f, .035f, .018f, rgb(.86f, .43f, .38f))
+
+        // Sculpted layered fringe and swept black hair silhouette.
+        part(-.19f, 2.67f, -.055f, .17f, .13f, .18f, hairLight, 0f, -22f)
+        part(-.07f, 2.73f, -.035f, .19f, .14f, .18f, hair, 0f, -12f)
+        part(.09f, 2.72f, -.035f, .20f, .14f, .18f, hairLight, 0f, 12f)
+        part(.22f, 2.64f, -.015f, .13f, .12f, .16f, hair, 0f, 25f)
+        part(-.20f, 2.57f, -.19f, .12f, .13f, .10f, hairLight, 0f, -28f)
+        part(-.08f, 2.62f, -.205f, .13f, .12f, .09f, hair, 0f, -18f)
+        part(.06f, 2.64f, -.20f, .14f, .13f, .09f, hairLight, 0f, 12f)
+        part(.19f, 2.58f, -.17f, .12f, .12f, .09f, hair, 0f, 25f)
+        part(-.04f, 2.57f, -.255f, .105f, .15f, .055f, hair, 0f, -14f)
+        part(.09f, 2.55f, -.252f, .10f, .14f, .055f, hairLight, 0f, 12f)
+
+        // Hoodie details: raised crown emblem, drawstrings and front pouch.
+        part(0f, 1.53f, -.292f, .18f, .12f, .018f, rgb(.92f, .93f, .97f))
+        part(0f, 1.46f, -.309f, .16f, .025f, .012f, rgb(.92f, .93f, .97f))
+        part(-.12f, 1.57f, -.307f, .035f, .07f, .014f, rgb(.92f, .93f, .97f), 0f, -24f)
+        part(-.04f, 1.62f, -.307f, .035f, .09f, .014f, rgb(.92f, .93f, .97f), 0f, -8f)
+        part(.04f, 1.62f, -.307f, .035f, .09f, .014f, rgb(.92f, .93f, .97f), 0f, 8f)
+        part(.12f, 1.57f, -.307f, .035f, .07f, .014f, rgb(.92f, .93f, .97f), 0f, 24f)
+        part(-.075f, 1.75f, -.285f, .014f, .18f, .012f, rgb(.62f, .63f, .67f))
+        part(.075f, 1.75f, -.285f, .014f, .18f, .012f, rgb(.62f, .63f, .67f))
+        part(0f, 1.22f, -.267f, .28f, .12f, .025f, rgb(.018f, .025f, .040f))
+        part(-.37f, 1.15f, -.025f, .13f, .14f, .12f, skin)
+        part(.37f, 1.15f, -.025f, .13f, .14f, .12f, skin)
+
+        // Cargo jogger pockets and signature white side piping.
+        part(-.225f, .70f, -.155f, .12f, .20f, .035f, rgb(.055f, .065f, .085f), 0f, -5f)
+        part(.225f, .70f, -.155f, .12f, .20f, .035f, rgb(.055f, .065f, .085f), 0f, 5f)
+        part(-.39f, .72f, -.105f, .025f, .28f, .022f, rgb(.88f, .90f, .94f))
+        part(.39f, .72f, -.105f, .025f, .28f, .022f, rgb(.88f, .90f, .94f))
+        part(-.22f, .89f, -.19f, .10f, .025f, .015f, rgb(.11f, .12f, .15f))
+        part(.22f, .89f, -.19f, .10f, .025f, .015f, rgb(.11f, .12f, .15f))
+
+        // High-top sneakers: white toe caps, tongues, laces and black crown marks.
+        part(-.22f, .16f, -.30f, .18f, .10f, .10f, rgb(.99f, .99f, 1f))
+        part(.22f, .16f, -.30f, .18f, .10f, .10f, rgb(.99f, .99f, 1f))
+        part(-.22f, .28f, -.12f, .12f, .13f, .07f, rgb(.96f, .97f, .99f))
+        part(.22f, .28f, -.12f, .12f, .13f, .07f, rgb(.96f, .97f, .99f))
+        for (i in 0..2) {
+            val laceY = .22f + i * .035f
+            part(-.22f, laceY, -.205f, .13f, .012f, .012f, rgb(.98f, .98f, 1f), 0f, 8f)
+            part(.22f, laceY, -.205f, .13f, .012f, .012f, rgb(.98f, .98f, 1f), 0f, -8f)
+        }
     }
 
     private fun box(x: Float,y: Float,z: Float,sx: Float,sy: Float,sz: Float,color: FloatArray) {
