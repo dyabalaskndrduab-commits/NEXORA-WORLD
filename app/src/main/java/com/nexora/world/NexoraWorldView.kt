@@ -41,6 +41,7 @@ class NexoraWorldView(context: Context) : View(context) {
     private var walkPhase = 0f
     private var wardrobeOpen = false
     private var wardrobeCategory = 0
+    private var hoodieEquipped = true
     private val wardrobePrefs = context.getSharedPreferences("nexora_avatar", Context.MODE_PRIVATE)
 
     private data class Crystal(var x: Float, var y: Float, var active: Boolean = true, var respawn: Float = 0f)
@@ -53,7 +54,7 @@ class NexoraWorldView(context: Context) : View(context) {
     private var npcY = .66f
     private var npcDirection = -1f
 
-    init { isFocusable = true }
+    init { isFocusable = true; hoodieEquipped = wardrobePrefs.getBoolean("hoodie_equipped", true) }
 
     private fun say(message: String) {
         toast = message
@@ -351,6 +352,7 @@ class NexoraWorldView(context: Context) : View(context) {
         p.isFilterBitmap = true
         p.alpha = 255
         c.drawBitmap(playerSprite, null, dst, p)
+        if (hoodieEquipped) drawNexoraHoodieLayer(c, dst)
         p.isFilterBitmap = false
         p.color = Color.argb(215, 18, 23, 39)
         c.drawRoundRect(x - 23f * scale, y - spriteHeight - 13f * scale + bob,
@@ -359,6 +361,49 @@ class NexoraWorldView(context: Context) : View(context) {
         p.textAlign = Paint.Align.CENTER
         p.textSize = 6.5f * scale
         c.drawText("DEAB", x, y - spriteHeight - 6f * scale + bob, p)
+    }
+
+    // Independent clothing layer: the hoodie can be equipped without replacing the base avatar.
+    private fun drawNexoraHoodieLayer(c: Canvas, avatarBounds: android.graphics.RectF) {
+        val left = avatarBounds.left + avatarBounds.width * .29f
+        val right = avatarBounds.left + avatarBounds.width * .71f
+        val top = avatarBounds.top + avatarBounds.height * .39f
+        val bottom = avatarBounds.top + avatarBounds.height * .70f
+        val cx = (left + right) / 2f
+        val torso = Path().apply {
+            moveTo(left + avatarBounds.width * .035f, top + avatarBounds.height * .055f)
+            lineTo(cx - avatarBounds.width * .055f, top)
+            lineTo(cx + avatarBounds.width * .055f, top)
+            lineTo(right - avatarBounds.width * .035f, top + avatarBounds.height * .055f)
+            lineTo(right, bottom - avatarBounds.height * .025f)
+            lineTo(right - avatarBounds.width * .055f, bottom)
+            lineTo(left + avatarBounds.width * .055f, bottom)
+            lineTo(left, bottom - avatarBounds.height * .025f)
+            close()
+        }
+        p.style = Paint.Style.FILL
+        p.color = Color.rgb(13, 15, 23)
+        c.drawPath(torso, p)
+        p.color = Color.rgb(35, 38, 51)
+        p.strokeWidth = avatarBounds.width * .012f
+        p.style = Paint.Style.STROKE
+        c.drawPath(torso, p)
+        p.style = Paint.Style.FILL
+        // Hood and shoulder seam
+        p.color = Color.rgb(8, 10, 17)
+        c.drawOval(cx - avatarBounds.width * .105f, top - avatarBounds.height * .025f,
+            cx + avatarBounds.width * .105f, top + avatarBounds.height * .12f, p)
+        p.color = Color.rgb(205, 207, 220)
+        p.textAlign = Paint.Align.CENTER
+        p.textSize = avatarBounds.height * .072f
+        c.drawText("♛", cx, top + avatarBounds.height * .205f, p)
+        p.color = Color.WHITE
+        p.textSize = avatarBounds.height * .034f
+        c.drawText("NEXORA", cx, top + avatarBounds.height * .255f, p)
+        p.color = Color.rgb(70, 72, 88)
+        p.strokeWidth = avatarBounds.width * .008f
+        c.drawLine(cx, top + avatarBounds.height * .27f, cx,
+            bottom - avatarBounds.height * .025f, p)
     }
 
     private fun drawWardrobe(c: Canvas, w: Float, h: Float) {
@@ -479,8 +524,8 @@ class NexoraWorldView(context: Context) : View(context) {
                 if (wardrobeOpen) {
                     if (event.x > w*.87f && event.y < h*.17f) { wardrobeOpen=false; return true }
                     if (event.y >= h*.20f && event.y <= h*.31f && event.x > w*.48f) { wardrobeCategory=((event.x-w*.49f)/(w*.112f)).toInt().coerceIn(0,3); invalidate(); return true }
-                    if (event.y > h*.82f && event.x > w*.65f) { wardrobePrefs.edit().putInt("equipped_hoodie",0).apply(); wardrobeOpen=false; say("Black NEXORA outfit saved!"); return true }
-                    if (event.x > w*.48f && event.y >= h*.34f && event.y <= h*.80f) { say(if(wardrobeCategory==0) "Black NEXORA hoodie is equipped" else "More items in this category are coming soon"); return true }
+                    if (event.y > h*.82f && event.x > w*.65f) { hoodieEquipped = true; wardrobePrefs.edit().putInt("equipped_hoodie",0).putBoolean("hoodie_equipped",true).apply(); wardrobeOpen=false; say("Black NEXORA hoodie equipped and saved!"); return true }
+                    if (event.x > w*.48f && event.y >= h*.34f && event.y <= h*.80f) { if (wardrobeCategory==0) { hoodieEquipped=true; say("Black NEXORA hoodie preview applied") } else say("More items in this category are coming soon"); return true }
                     return true
                 }
                 if (event.x > w*.47f && event.x < w*.62f && event.y < h*.16f) { wardrobeOpen=true; joystick[0]=0f; joystick[1]=0f; invalidate(); return true }
