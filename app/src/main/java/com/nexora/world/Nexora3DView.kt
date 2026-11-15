@@ -182,7 +182,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
     private var last = System.nanoTime()
 
     fun setMove(x: Float, y: Float) { moveX = x; moveY = y }
-    fun rotateCamera(amount: Float) { look = (look + amount * 3.0f).coerceIn(-1.35f, 1.35f) }
+    fun rotateCamera(amount: Float) { look = (look + amount * 3.0f).coerceIn(-3.14f, 3.14f) }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(.035f, .055f, .09f, 1f)
