@@ -523,13 +523,28 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         part(-.04f, 2.57f, -.255f, .105f, .15f, .055f, hair, 0f, -14f)
         part(.09f, 2.55f, -.252f, .10f, .14f, .055f, hairLight, 0f, 12f)
 
-        // Hoodie details: raised crown emblem, drawstrings and front pouch.
-        part(0f, 1.53f, -.292f, .18f, .12f, .018f, rgb(.92f, .93f, .97f))
-        part(0f, 1.46f, -.309f, .16f, .025f, .012f, rgb(.92f, .93f, .97f))
-        part(-.12f, 1.57f, -.307f, .035f, .07f, .014f, rgb(.92f, .93f, .97f), 0f, -24f)
-        part(-.04f, 1.62f, -.307f, .035f, .09f, .014f, rgb(.92f, .93f, .97f), 0f, -8f)
-        part(.04f, 1.62f, -.307f, .035f, .09f, .014f, rgb(.92f, .93f, .97f), 0f, 8f)
-        part(.12f, 1.57f, -.307f, .035f, .07f, .014f, rgb(.92f, .93f, .97f), 0f, 24f)
+        // Crisp three-point NEXORA crown emblem on the hoodie.
+        fun block(x: Float, y: Float, z: Float, sx: Float, sy: Float, sz: Float,
+                  color: FloatArray, rz: Float = 0f) {
+            Matrix.setIdentityM(model, 0)
+            Matrix.translateM(model, 0, px, bob, pz)
+            Matrix.rotateM(model, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
+            Matrix.scaleM(model, 0, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale, RemoteGameConfig.avatarScale)
+            Matrix.translateM(model, 0, x, y, z)
+            if (rz != 0f) Matrix.rotateM(model, 0, rz, 0f, 0f, 1f)
+            Matrix.scaleM(model, 0, sx, sy, sz)
+            drawMesh(cube, cubeCount, color)
+        }
+        val emblem = rgb(.96f, .97f, 1f)
+        block(0f, 1.485f, -.307f, .205f, .026f, .018f, emblem)
+        block(-.155f, 1.545f, -.307f, .025f, .090f, .018f, emblem, -34f)
+        block(-.075f, 1.575f, -.307f, .025f, .105f, .018f, emblem, -10f)
+        block(.075f, 1.575f, -.307f, .025f, .105f, .018f, emblem, 10f)
+        block(.155f, 1.545f, -.307f, .025f, .090f, .018f, emblem, 34f)
+        // Small wordmark strokes beneath the crown.
+        block(-.075f, 1.435f, -.307f, .035f, .012f, .012f, emblem)
+        block(0f, 1.435f, -.307f, .035f, .012f, .012f, emblem)
+        block(.075f, 1.435f, -.307f, .035f, .012f, .012f, emblem)
         part(-.075f, 1.75f, -.285f, .014f, .18f, .012f, rgb(.62f, .63f, .67f))
         part(.075f, 1.75f, -.285f, .014f, .18f, .012f, rgb(.62f, .63f, .67f))
         part(0f, 1.22f, -.267f, .28f, .12f, .025f, rgb(.018f, .025f, .040f))
