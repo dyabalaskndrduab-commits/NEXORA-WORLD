@@ -41,7 +41,7 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
     fun pauseWorld() { world.onPause() }
 
     private class WorldSurface(context: Context) : GLSurfaceView(context) {
-        val renderer = WorldRenderer()
+        val renderer = WorldRenderer(context)
         init {
             setEGLContextClientVersion(2)
             setRenderer(renderer)
@@ -180,7 +180,8 @@ class Nexora3DView(context: Context) : FrameLayout(context) {
     }
 }
 
-private class WorldRenderer : GLSurfaceView.Renderer {
+private class WorldRenderer(private val context: Context) : GLSurfaceView.Renderer {
+    private val glbAvatar = GlbAvatarRenderer(context)
     private var program = 0
     private var positionHandle = 0
     private var normalHandle = 0
@@ -254,6 +255,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         cubeCount = 36
         sphere = makeSphere()
         sphereCount = 6 * 20 * 24
+        glbAvatar.load()
 
         // The approved NEXORA character artwork is now rendered as a textured plane
         // inside the perspective 3D world, rather than as a HUD/screen-space image.
@@ -351,7 +353,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
         GLES20.glEnableVertexAttribArray(positionHandle)
         GLES20.glEnableVertexAttribArray(normalHandle)
         drawCity()
-        drawAvatar()
+        glbAvatar.draw(vp, px, pz, yaw, if (sqrt(velocityX*velocityX + velocityZ*velocityZ) > .045f) abs(sin(walk * 2f)) * RemoteGameConfig.bodyBounce else 0f, RemoteGameConfig.avatarScale)
         GLES20.glDisableVertexAttribArray(positionHandle)
         GLES20.glDisableVertexAttribArray(normalHandle)
     }
