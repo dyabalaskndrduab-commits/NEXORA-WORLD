@@ -453,7 +453,18 @@ class NexoraWorldView(context: Context) : View(context) {
         p.color=Color.rgb(255,211,102);p.textSize=h*.024f;c.drawText("BLACK NEXORA SET",w*.25f,h*.89f,p)
         val tabs=arrayOf("HOODIE","HAIR","PANTS","SHOES")
         for(i in tabs.indices){val x=w*(.49f+i*.112f);p.color=if(wardrobeCategory==i)Color.rgb(112,67,220) else Color.rgb(42,49,77);c.drawRoundRect(x,h*.20f,x+w*.102f,h*.30f,10f,10f,p);p.color=Color.WHITE;p.textSize=h*.019f;c.drawText(tabs[i],x+w*.051f,h*.26f,p)}
-        for(i in 0..5){val x=w*(.49f+(i%3)*.145f);val y=h*(.34f+(i/3)*.235f);p.color=if(i==0)Color.rgb(80,55,143) else Color.rgb(37,44,70);c.drawRoundRect(x,y,x+w*.132f,y+h*.205f,12f,12f,p);p.color=if(i==0)Color.rgb(13,16,27) else Color.rgb(65,70,91);c.drawRoundRect(x+w*.025f,y+h*.025f,x+w*.107f,y+h*.155f,10f,10f,p);p.color=Color.WHITE;p.textAlign=Paint.Align.CENTER;p.textSize=h*.023f;c.drawText(if(i==0)"CROWN" else "LOCKED",x+w*.066f,y+h*.105f,p);p.textSize=h*.017f;c.drawText(if(i==0)"EQUIPPED" else "COMING SOON",x+w*.066f,y+h*.185f,p)}
+        for(i in 0..5){
+            val x=w*(.49f+(i%3)*.145f); val y=h*(.34f+(i/3)*.235f)
+            val active=when(wardrobeCategory){0->hoodieEquipped;1->blackHairEquipped;2->blackPantsEquipped;else->whiteSneakersEquipped}
+            p.color=if((i==0 && active)||(i==1 && !active))Color.rgb(80,55,143) else Color.rgb(37,44,70)
+            c.drawRoundRect(x,y,x+w*.132f,y+h*.205f,12f,12f,p)
+            p.color=if(i==0)Color.rgb(13,16,27) else Color.rgb(65,70,91)
+            c.drawRoundRect(x+w*.025f,y+h*.025f,x+w*.107f,y+h*.155f,10f,10f,p)
+            p.color=Color.WHITE;p.textAlign=Paint.Align.CENTER;p.textSize=h*.021f
+            val label=if(i==0)when(wardrobeCategory){0->"BLACK HOODIE";1->"BLACK HAIR";2->"BLACK PANTS";else->"WHITE SHOES"} else if(i==1)"DEFAULT" else "LOCKED"
+            c.drawText(label,x+w*.066f,y+h*.105f,p);p.textSize=h*.016f
+            c.drawText(if((i==0 && active)||(i==1 && !active))"EQUIPPED" else "TAP TO EQUIP",x+w*.066f,y+h*.185f,p)
+        }
         p.color=Color.rgb(255,197,60);c.drawRoundRect(w*.68f,h*.84f,w*.91f,h*.92f,14f,14f,p);p.color=Color.rgb(25,25,40);p.textSize=h*.027f;c.drawText("SAVE OUTFIT",w*.795f,h*.89f,p)
     }
 
@@ -557,8 +568,20 @@ class NexoraWorldView(context: Context) : View(context) {
                 if (wardrobeOpen) {
                     if (event.x > w*.87f && event.y < h*.17f) { wardrobeOpen=false; return true }
                     if (event.y >= h*.20f && event.y <= h*.31f && event.x > w*.48f) { wardrobeCategory=((event.x-w*.49f)/(w*.112f)).toInt().coerceIn(0,3); invalidate(); return true }
-                    if (event.y > h*.82f && event.x > w*.65f) { hoodieEquipped = true; wardrobePrefs.edit().putInt("equipped_hoodie",0).putBoolean("hoodie_equipped",true).apply(); wardrobeOpen=false; say("Black NEXORA hoodie equipped and saved!"); return true }
-                    if (event.x > w*.48f && event.y >= h*.34f && event.y <= h*.80f) { if (wardrobeCategory==0) { hoodieEquipped=true; say("Black NEXORA hoodie preview applied") } else say("More items in this category are coming soon"); return true }
+                    if (event.y > h*.82f && event.x > w*.65f) {
+                        wardrobePrefs.edit().putInt("equipped_hoodie",if(hoodieEquipped)0 else 1)
+                            .putBoolean("hoodie_equipped",hoodieEquipped).putBoolean("black_hair",blackHairEquipped)
+                            .putBoolean("black_pants",blackPantsEquipped).putBoolean("white_sneakers",whiteSneakersEquipped).apply()
+                        wardrobeOpen=false; say("NEXORA outfit saved on this device!"); return true
+                    }
+                    if (event.x > w*.48f && event.y >= h*.34f && event.y <= h*.80f) {
+                        val col=((event.x-w*.49f)/(w*.145f)).toInt().coerceIn(0,2)
+                        val row=if(event.y>h*.57f)1 else 0
+                        val item=col+row*3
+                        val equip=item==0
+                        when(wardrobeCategory){0->hoodieEquipped=equip;1->blackHairEquipped=equip;2->blackPantsEquipped=equip;3->whiteSneakersEquipped=equip}
+                        invalidate(); say("Avatar preview updated"); return true
+                    }
                     return true
                 }
                 if (event.x > w*.47f && event.x < w*.62f && event.y < h*.16f) { wardrobeOpen=true; joystick[0]=0f; joystick[1]=0f; invalidate(); return true }
