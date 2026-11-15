@@ -17,6 +17,10 @@ object RemoteGameConfig {
     @Volatile var walkCycleBase = 7.0f
     @Volatile var walkCycleSpeed = 2.0f
     @Volatile var cameraFollow = 5.5f
+    @Volatile var legSwingRadians = 0.62f
+    @Volatile var footLift = 0.16f
+    @Volatile var kneeBendDegrees = 24f
+    @Volatile var bodyBounce = 0.035f
 
     fun refresh(context: Context) {
         val prefs = context.applicationContext.getSharedPreferences("nexora_live_config", Context.MODE_PRIVATE)
@@ -59,6 +63,10 @@ object RemoteGameConfig {
             walkCycleBase = movement.optDouble("walkCycleBase", walkCycleBase.toDouble()).toFloat().coerceIn(2f, 12f)
             walkCycleSpeed = movement.optDouble("walkCycleSpeed", walkCycleSpeed.toDouble()).toFloat().coerceIn(0f, 5f)
             cameraFollow = movement.optDouble("cameraFollow", cameraFollow.toDouble()).toFloat().coerceIn(1f, 12f)
+            legSwingRadians = movement.optDouble("legSwingRadians", legSwingRadians.toDouble()).toFloat().coerceIn(0.2f, 0.9f)
+            footLift = movement.optDouble("footLift", footLift.toDouble()).toFloat().coerceIn(0.04f, 0.28f)
+            kneeBendDegrees = movement.optDouble("kneeBendDegrees", kneeBendDegrees.toDouble()).toFloat().coerceIn(5f, 40f)
+            bodyBounce = movement.optDouble("bodyBounce", bodyBounce.toDouble()).toFloat().coerceIn(0.005f, 0.08f)
         } catch (e: Exception) {
             Log.w("NEXORA_CONFIG", "Invalid remote config ignored", e)
         }
