@@ -1,7 +1,7 @@
 package com.nexora.world
 
 import android.content.Context
-import.opengl.GLES20
+import android.opengl.GLES20
 import android.opengl.Matrix
 import org.json.JSONObject
 import java.nio.ByteBuffer
