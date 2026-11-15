@@ -1,13 +1,17 @@
 {
   "schemaVersion": 1,
-  "version": 1,
+  "version": 2,
   "movement": {
-    "moveSpeed": 4,
-    "acceleration": 11,
-    "deceleration": 7.5,
-    "turnResponsiveness": 12,
-    "walkCycleBase": 7,
-    "walkCycleSpeed": 2,
-    "cameraFollow": 5.5
+    "moveSpeed": 3.7,
+    "acceleration": 9.5,
+    "deceleration": 8.5,
+    "turnResponsiveness": 10,
+    "walkCycleBase": 6.4,
+    "walkCycleSpeed": 2.25,
+    "cameraFollow": 5,
+    "legSwingRadians": 0.62,
+    "footLift": 0.16,
+    "kneeBendDegrees": 24,
+    "bodyBounce": 0.035
   }
 }
