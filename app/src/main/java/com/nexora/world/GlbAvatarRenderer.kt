@@ -7,6 +7,7 @@ import org.json.JSONObject
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
+import kotlin.math.abs
 
 /**
  * Minimal GLB 2.0 renderer for the NEXORA avatar asset.
