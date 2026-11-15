@@ -114,56 +114,157 @@ class NexoraWorldView(context: Context) : View(context) {
     }
 
     private fun drawWorld(c: Canvas, w: Float, h: Float) {
-        c.drawColor(Color.rgb(112, 170, 193))
+        // Sky, distant hills and the green city outskirts.
+        c.drawColor(Color.rgb(119, 183, 207))
         p.style = Paint.Style.FILL
         p.color = Color.rgb(89, 151, 145)
-        c.drawRect(0f, h * .53f, w, h, p)
-        p.color = Color.argb(105, 255, 255, 255)
+        c.drawRect(0f, h * .40f, w, h, p)
+        p.color = Color.rgb(92, 157, 139)
+        c.drawOval(-w * .18f, h * .30f, w * .42f, h * .63f, p)
+        c.drawOval(w * .60f, h * .29f, w * 1.16f, h * .64f, p)
+
+        // Soft clouds.
+        p.color = Color.argb(115, 255, 255, 255)
         for (i in 0..3) {
-            val x = w * (.12f + i * .27f)
-            val y = h * (.13f + (i % 2) * .07f)
+            val x = w * (.10f + i * .28f)
+            val y = h * (.12f + (i % 2) * .06f)
             c.drawCircle(x, y, h * .018f, p)
             c.drawCircle(x + h * .025f, y - h * .008f, h * .023f, p)
             c.drawCircle(x + h * .05f, y, h * .017f, p)
         }
-        for (i in 0..8) {
-            val bw = w * .075f
-            val x = i * w * .13f
-            val top = h * (.25f + (i % 3) * .055f)
-            p.color = if (i % 2 == 0) Color.rgb(66, 91, 120) else Color.rgb(80, 107, 133)
-            c.drawRect(x, top, x + bw, h * .62f, p)
-            p.color = Color.rgb(226, 210, 163)
+
+        // Distant skyline gives the district depth.
+        for (i in 0..10) {
+            val bw = w * (.055f + (i % 3) * .012f)
+            val x = i * w * .096f
+            val top = h * (.24f + (i % 4) * .035f)
+            p.color = when (i % 3) {
+                0 -> Color.rgb(67, 91, 119)
+                1 -> Color.rgb(78, 105, 128)
+                else -> Color.rgb(92, 111, 132)
+            }
+            c.drawRect(x, top, x + bw, h * .58f, p)
+            p.color = Color.rgb(232, 211, 158)
             for (row in 0..3) for (col in 0..1) {
-                val wx = x + bw * (.22f + col * .42f)
-                val wy = top + h * .035f + row * h * .065f
-                c.drawRoundRect(wx, wy, wx + bw * .13f, wy + h * .025f, 3f, 3f, p)
+                val wx = x + bw * (.20f + col * .48f)
+                val wy = top + h * .035f + row * h * .062f
+                c.drawRoundRect(wx, wy, wx + bw * .16f, wy + h * .022f, 3f, 3f, p)
             }
         }
-        val plaza = Path().apply {
-            moveTo(w * .5f, h * .37f); lineTo(w * .96f, h * .77f)
-            lineTo(w * .5f, h * 1.02f); lineTo(w * .04f, h * .77f); close()
+
+        // Main city avenue and side streets.
+        p.color = Color.rgb(65, 76, 87)
+        c.drawRect(0f, h * .49f, w, h * .62f, p)
+        c.drawRect(w * .08f, h * .34f, w * .15f, h, p)
+        c.drawRect(w * .78f, h * .34f, w * .85f, h, p)
+        p.color = Color.rgb(194, 190, 174)
+        c.drawRect(0f, h * .485f, w, h * .495f, p)
+        c.drawRect(0f, h * .615f, w, h * .625f, p)
+        p.color = Color.rgb(238, 222, 164)
+        for (i in 0..10) {
+            val x = w * (.025f + i * .095f)
+            c.drawRoundRect(x, h * .545f, x + w * .045f, h * .552f, 4f, 4f, p)
         }
-        p.color = Color.rgb(205, 192, 163)
+        p.color = Color.rgb(202, 197, 179)
+        c.drawRect(w * .055f, h * .34f, w * .08f, h, p)
+        c.drawRect(w * .15f, h * .34f, w * .175f, h, p)
+        c.drawRect(w * .755f, h * .34f, w * .78f, h, p)
+        c.drawRect(w * .85f, h * .34f, w * .875f, h, p)
+
+        // Distinct city blocks and storefronts.
+        drawBuilding(c, w * .19f, h * .34f, w * .16f, h * .25f, Color.rgb(73, 105, 139))
+        drawBuilding(c, w * .37f, h * .28f, w * .12f, h * .22f, Color.rgb(83, 126, 139))
+        drawBuilding(c, w * .53f, h * .32f, w * .13f, h * .18f, Color.rgb(143, 104, 91))
+        drawBuilding(c, w * .88f, h * .32f, w * .10f, h * .27f, Color.rgb(132, 89, 121))
+        drawShop(c, w * .20f, h * .66f, w * .16f, h * .14f, "CAFE", Color.rgb(190, 117, 77))
+        drawShop(c, w * .64f, h * .65f, w * .13f, h * .15f, "ARCADE", Color.rgb(93, 111, 174))
+        drawShop(c, w * .86f, h * .68f, w * .12f, h * .13f, "STYLE", Color.rgb(155, 91, 139))
+
+        // Central pedestrian square, tiled paths and garden pockets.
+        val plaza = Path().apply {
+            moveTo(w * .5f, h * .39f)
+            lineTo(w * .76f, h * .69f)
+            lineTo(w * .5f, h * .98f)
+            lineTo(w * .24f, h * .69f)
+            close()
+        }
+        p.color = Color.rgb(194, 181, 153)
         c.drawPath(plaza, p)
         p.color = Color.rgb(226, 215, 190)
         p.strokeWidth = 2f
         for (i in 1..6) {
             val t = i / 7f
-            c.drawLine(w * (.5f - .45f * t), h * (.37f + .40f * t),
-                w * (.5f + .45f * t), h * (.37f + .40f * t), p)
+            c.drawLine(w * (.5f - .25f * t), h * (.39f + .30f * t),
+                w * (.5f + .25f * t), h * (.39f + .30f * t), p)
         }
-        drawBuilding(c, w * .11f, h * .34f, w * .22f, h * .30f, Color.rgb(73, 105, 139))
-        drawBuilding(c, w * .68f, h * .29f, w * .20f, h * .35f, Color.rgb(132, 89, 121))
-        drawBuilding(c, w * .39f, h * .27f, w * .14f, h * .21f, Color.rgb(83, 126, 139))
-        drawTree(c, w * .20f, h * .70f)
-        drawTree(c, w * .82f, h * .72f)
-        drawTree(c, w * .36f, h * .84f)
+        c.drawLine(w * .5f, h * .39f, w * .5f, h * .98f, p)
+        c.drawLine(w * .24f, h * .69f, w * .76f, h * .69f, p)
+
+        // Park corner, landscaping and street furniture.
+        drawTree(c, w * .13f, h * .77f)
+        drawTree(c, w * .36f, h * .88f)
+        drawTree(c, w * .83f, h * .78f)
+        drawTree(c, w * .94f, h * .88f)
+        drawTree(c, w * .28f, h * .48f)
+        drawStreetLamp(c, w * .17f, h * .61f)
+        drawStreetLamp(c, w * .74f, h * .59f)
+        drawBench(c, w * .34f, h * .76f)
+        drawBench(c, w * .68f, h * .83f)
         drawFountain(c, w * .5f, h * .67f)
+        drawCitySign(c, w * .5f, h * .37f, "NEXORA PLAZA")
+
+        // Live world objects are drawn over the environment.
         crystalsInWorld.filter { it.active }.forEach { drawCrystal(c, w * it.x, h * it.y, h) }
         drawNpc(c, w * npcX, h * npcY, h)
         drawAvatar(c, w * avatar[0], h * avatar[1], h)
         drawHud(c, w, h)
         drawControls(c, w, h)
+    }
+
+    private fun drawShop(c: Canvas, x: Float, y: Float, bw: Float, bh: Float, label: String, color: Int) {
+        p.color = Color.argb(55, 0, 0, 0)
+        c.drawRoundRect(x - 5f, y + bh - 4f, x + bw + 7f, y + bh + 8f, 8f, 8f, p)
+        p.color = color
+        c.drawRect(x, y, x + bw, y + bh, p)
+        p.color = Color.rgb(244, 226, 183)
+        c.drawRect(x - 4f, y - bh * .18f, x + bw + 4f, y + 5f, p)
+        p.color = Color.rgb(46, 57, 74)
+        c.drawRect(x + bw * .08f, y + bh * .25f, x + bw * .92f, y + bh * .72f, p)
+        p.color = Color.rgb(119, 207, 218)
+        c.drawRect(x + bw * .14f, y + bh * .31f, x + bw * .48f, y + bh * .66f, p)
+        c.drawRect(x + bw * .54f, y + bh * .31f, x + bw * .86f, y + bh * .66f, p)
+        p.color = Color.WHITE
+        p.textAlign = Paint.Align.CENTER
+        p.textSize = bh * .16f
+        c.drawText(label, x + bw / 2f, y + bh * .12f, p)
+    }
+
+    private fun drawStreetLamp(c: Canvas, x: Float, y: Float) {
+        p.color = Color.rgb(54, 63, 72)
+        c.drawRect(x - 2f, y - 54f, x + 2f, y + 8f, p)
+        c.drawLine(x, y - 52f, x + 13f, y - 60f, p)
+        p.color = Color.rgb(255, 232, 160)
+        c.drawCircle(x + 13f, y - 59f, 6f, p)
+        p.color = Color.argb(40, 255, 232, 160)
+        c.drawCircle(x + 13f, y - 59f, 14f, p)
+    }
+
+    private fun drawBench(c: Canvas, x: Float, y: Float) {
+        p.color = Color.rgb(104, 70, 49)
+        c.drawRoundRect(x - 20f, y - 8f, x + 20f, y + 1f, 3f, 3f, p)
+        c.drawRect(x - 16f, y + 1f, x - 12f, y + 12f, p)
+        c.drawRect(x + 12f, y + 1f, x + 16f, y + 12f, p)
+        c.drawRect(x - 20f, y - 18f, x - 15f, y - 5f, p)
+        c.drawRect(x + 15f, y - 18f, x + 20f, y - 5f, p)
+    }
+
+    private fun drawCitySign(c: Canvas, x: Float, y: Float, label: String) {
+        p.color = Color.rgb(47, 65, 82)
+        c.drawRoundRect(x - 62f, y - 22f, x + 62f, y - 2f, 7f, 7f, p)
+        p.color = Color.rgb(113, 226, 221)
+        p.textAlign = Paint.Align.CENTER
+        p.textSize = 11f
+        c.drawText(label, x, y - 8f, p)
     }
 
     private fun drawBuilding(c: Canvas, x: Float, y: Float, bw: Float, bh: Float, color: Int) {
