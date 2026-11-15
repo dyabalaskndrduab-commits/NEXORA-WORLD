@@ -223,8 +223,8 @@ private class WorldRenderer : GLSurfaceView.Renderer {
             attribute vec3 aNormal;
             varying float vLight;
             void main() {
-              vec3 n = normalize(mat3(uModel) * aNormal);
-              vLight = 0.48 + 0.52 * max(dot(n, normalize(vec3(-0.35, 0.85, 0.42))), 0.0);
+              vec3 n = normalize(aNormal);
+              vLight = 0.62 + 0.38 * max(dot(n, normalize(vec3(-0.35, 0.85, 0.42))), 0.0);
               gl_Position = uMVP * vec4(aPosition, 1.0);
             }
         """.trimIndent()
@@ -465,7 +465,7 @@ private class WorldRenderer : GLSurfaceView.Renderer {
             val a1=PI*i/lat; val a2=PI*(i+1)/lat
             for (j in 0 until lon) {
                 val b1=2*PI*j/lon; val b2=2*PI*(j+1)/lon
-                val pts=arrayOf(point(a1,b1),point(a2,b1),point(a2,b2),point(a1,b1),point(a2,b2),point(a1,b2))
+                val pts=arrayOf(point(a1,b1),point(a1,b2),point(a2,b2),point(a1,b1),point(a2,b2),point(a2,b1))
                 for (v in pts) { data.add(v[0]);data.add(v[1]);data.add(v[2]);data.add(v[0]);data.add(v[1]);data.add(v[2]) }
             }
         }
