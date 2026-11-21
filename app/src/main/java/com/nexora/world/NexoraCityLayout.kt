@@ -41,8 +41,8 @@ internal object NexoraCityLayout {
 
     /** Returns false outside the city or when the avatar footprint intersects a building. */
     fun canOccupy(x: Float, z: Float, radius: Float = .48f): Boolean {
-        if (!x.isFinite() || !z.isFinite() || radius < 0f) return false
-        if (abs(x) > WORLD_LIMIT || abs(z) > WORLD_LIMIT) return false
+        if (!x.isFinite() || !z.isFinite() || !radius.isFinite() || radius < 0f) return false
+        if (abs(x) + radius > WORLD_LIMIT || abs(z) + radius > WORLD_LIMIT) return false
         return obstacles.none { obstacle ->
             abs(x - obstacle.x) < obstacle.halfWidth + radius &&
                 abs(z - obstacle.z) < obstacle.halfDepth + radius
