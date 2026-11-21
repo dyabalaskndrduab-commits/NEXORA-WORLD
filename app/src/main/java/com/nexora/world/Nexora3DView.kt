@@ -310,7 +310,7 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
-        Matrix.perspectiveM(projection, 0, 58f, width.toFloat() / height.coerceAtLeast(1), .1f, 140f)
+        Matrix.perspectiveM(projection, 0, 58f, width.toFloat() / height.coerceAtLeast(1), .1f, 220f)
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -331,8 +331,10 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
         val blend = (dt * if (inputLength > .04f) RemoteGameConfig.acceleration else RemoteGameConfig.deceleration).coerceAtMost(1f)
         velocityX += (desiredX - velocityX) * blend
         velocityZ += (desiredZ - velocityZ) * blend
-        px = (px + velocityX * dt).coerceIn(-18f, 18f)
-        pz = (pz + velocityZ * dt).coerceIn(-20f, 18f)
+        val nextX = px + velocityX * dt
+        if (NexoraCityLayout.canOccupy(nextX, pz)) px = nextX else velocityX = 0f
+        val nextZ = pz + velocityZ * dt
+        if (NexoraCityLayout.canOccupy(px, nextZ)) pz = nextZ else velocityZ = 0f
         val speed = sqrt(velocityX*velocityX + velocityZ*velocityZ)
         if (speed > .045f) {
             val targetYaw = atan2(-velocityX, -velocityZ)
@@ -359,15 +361,30 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
     }
 
     private fun drawCity() {
-        box(0f, -.22f, 0f, 48f, .4f, 48f, rgb(.20f,.29f,.31f))
-        box(0f, -.005f, 0f, 12f, .04f, 48f, rgb(.18f,.21f,.25f))
-        box(-7f, .01f, 0f, 1.2f, .06f, 48f, rgb(.63f,.62f,.55f))
-        box(7f, .01f, 0f, 1.2f, .06f, 48f, rgb(.63f,.62f,.55f))
-        for (i in -10..10 step 2) {
-            box(i.toFloat(), .025f, 0f, .07f, .025f, .9f, rgb(.94f,.79f,.43f))
+        // A 140 x 140 walkable district grid: the player can leave the plaza and
+        // reach residential blocks, parks, retail streets and two city landmarks.
+        box(0f, -.22f, 0f, 140f, .4f, 140f, rgb(.20f,.29f,.31f))
+
+        val road = rgb(.15f,.18f,.22f)
+        val sidewalk = rgb(.58f,.59f,.54f)
+        val laneMark = rgb(.88f,.76f,.48f)
+        for (lane in listOf(-48f, -20f, 20f, 48f)) {
+            val width = if (abs(lane) < 30f) 7f else 6f
+            box(lane, -.005f, 0f, width, .04f, 140f, road)
+            box(0f, -.005f, lane, 140f, .04f, width, road)
+            if (abs(lane) < 30f) {
+                box(lane - width/2f - 1.1f, .015f, 0f, 1.1f, .06f, 140f, sidewalk)
+                box(lane + width/2f + 1.1f, .015f, 0f, 1.1f, .06f, 140f, sidewalk)
+                box(0f, .015f, lane - width/2f - 1.1f, 140f, .06f, 1.1f, sidewalk)
+                box(0f, .015f, lane + width/2f + 1.1f, 140f, .06f, 1.1f, sidewalk)
+            }
+            box(lane, .025f, 0f, .10f, .025f, 140f, laneMark)
+            box(0f, .025f, lane, 140f, .025f, .10f, laneMark)
         }
+
+        // The original NEXORA plaza remains the central landmark.
         box(0f, .035f, 0f, 17f, .08f, 15f, rgb(.62f,.57f,.48f))
-        // Buildings around the plaza form a navigable 3D city block.
+        box(0f, .09f, -7.1f, 13f, .025f, 1.1f, rgb(.72f,.67f,.57f))
         building(-11f, -7f, 5f, 8f, 5f, rgb(.24f,.37f,.52f))
         building(10f, -8f, 5f, 11f, 5f, rgb(.42f,.29f,.43f))
         building(-11f, 8f, 5f, 9f, 5f, rgb(.34f,.43f,.48f))
@@ -375,32 +392,57 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
         shop(-5.5f, -9.8f, rgb(.67f,.36f,.24f), "cafe")
         shop(5.5f, -9.8f, rgb(.25f,.34f,.62f), "arcade")
         shop(-5.5f, 10f, rgb(.52f,.27f,.49f), "style")
-        // Garden islands, trees, benches and lamps.
-        for (x in listOf(-8f, 8f)) for (z in listOf(-3f, 4f)) {
-            box(x, .10f, z, 2.8f, .22f, 2.8f, rgb(.20f,.39f,.28f))
-            tree(x, z)
-        }
-        tree(-2.7f, 5.7f); tree(2.8f, -5.8f)
+
+        // Four residential towers mark the outer corners of the first city ring.
+        building(-35f, -35f, 8f, 13f, 9f, rgb(.23f,.35f,.50f))
+        building(35f, -35f, 9f, 17f, 8f, rgb(.38f,.30f,.46f))
+        building(-35f, 35f, 8f, 12f, 9f, rgb(.31f,.43f,.47f))
+        building(35f, 35f, 9f, 15f, 9f, rgb(.48f,.34f,.27f))
+
+        // Retail strip and two recognizable destination buildings.
+        shop(-35f, 0f, rgb(.63f,.34f,.25f), "market")
+        shop(35f, 0f, rgb(.25f,.36f,.60f), "studio")
+        building(0f, -58f, 13f, 12f, 10f, rgb(.22f,.40f,.53f))
+        building(0f, 58f, 12f, 10f, 10f, rgb(.44f,.28f,.43f))
+
+        // Green pocket parks with benches sit between the main avenues.
+        drawPark(0f, -35f)
+        drawPark(0f, 35f)
+
+        // Fountain, plaza seating and warm street lamps.
+        spherePart(0f, .32f, -.1f, 1.45f, .25f, 1.45f, rgb(.48f,.57f,.61f))
+        spherePart(0f, .48f, -.1f, 1.16f, .13f, 1.16f, rgb(.15f,.55f,.70f))
+        box(0f, .95f, -.1f, .20f, .8f, .20f, rgb(.76f,.82f,.83f))
         box(-3.4f,.45f,2.5f,1.5f,.12f,.42f,rgb(.40f,.23f,.13f))
         box(3.4f,.45f,-2.5f,1.5f,.12f,.42f,rgb(.40f,.23f,.13f))
-        // Fountain basin and animated water.
-        spherePart(0f,.32f,-.1f,1.45f,.25f,1.45f,rgb(.48f,.57f,.61f))
-        spherePart(0f,.48f,-.1f,1.16f,.13f,1.16f,rgb(.15f,.55f,.70f))
-        box(0f,.95f,-.1f,.20f,.8f,.20f,rgb(.76f,.82f,.83f))
-        // Distant skyline.
-        for (i in 0..8) {
-            val x = -22f + i * 5.5f
-            building(x, -22f, 3.4f, 8f + (i % 3) * 2f, 3.4f, rgb(.20f,.29f,.40f))
-        }
+        for (x in listOf(-14f, 14f)) for (z in listOf(-14f, 14f)) lamp(x, z)
+    }
+
+    private fun drawPark(x: Float, z: Float) {
+        box(x, .055f, z, 15f, .11f, 15f, rgb(.18f,.36f,.26f))
+        tree(x - 4f, z - 3.5f)
+        tree(x + 4f, z + 3.5f)
+        val wood = rgb(.38f,.24f,.15f)
+        box(x - 3f, .38f, z + 1.5f, 2.2f, .12f, .48f, wood)
+        box(x - 3f, .62f, z + 1.7f, 2.2f, .38f, .12f, wood)
+        box(x + 3f, .38f, z - 1.5f, 2.2f, .12f, .48f, wood)
+        box(x + 3f, .62f, z - 1.7f, 2.2f, .38f, .12f, wood)
+    }
+
+    private fun lamp(x: Float, z: Float) {
+        val metal = rgb(.15f,.19f,.25f)
+        box(x, .9f, z, .13f, 1.8f, .13f, metal)
+        box(x, .07f, z, .48f, .14f, .48f, metal)
+        spherePart(x, 1.86f, z, .16f, .16f, .16f, rgb(.98f,.78f,.42f))
     }
 
     private fun building(x: Float, z: Float, width: Float, height: Float, depth: Float, color: FloatArray) {
         box(x, height/2f, z, width, height, depth, color)
         box(x, height + .12f, z, width + .35f, .24f, depth + .35f, rgb(.13f,.18f,.25f))
-        val rows = max(2, (height / 1.8f).toInt())
-        for (r in 0 until rows) for (c in -1..1) {
-            box(x + c * width * .27f, 1.05f + r * 1.65f, z - depth/2f - .025f,
-                width*.13f, .65f, .045f, rgb(.77f,.68f,.43f))
+        val rows = max(2, (height / 3f).toInt())
+        for (r in 0 until rows) for (c in -1..1 step 2) {
+            box(x + c * width * .27f, 1.05f + r * 2.55f, z - depth/2f - .025f,
+                width*.13f, .72f, .045f, rgb(.77f,.68f,.43f))
         }
         box(x, .65f, z - depth/2f - .04f, width*.20f, 1.3f, .08f, rgb(.12f,.17f,.23f))
     }
