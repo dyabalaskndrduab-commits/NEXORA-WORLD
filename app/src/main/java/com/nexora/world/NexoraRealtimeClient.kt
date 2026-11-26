@@ -158,7 +158,7 @@ class NexoraRealtimeClient(
 
     private fun emit(event: String, payload: JSONObject? = null, reportOffline: Boolean = true) {
         val active = socket
-        if (active?.connected() != true) {
+        if (active == null || !active.connected()) {
             if (reportOffline) listener?.onServerError("OFFLINE", "الاتصال بالخادم غير متاح حالياً")
             return
         }
