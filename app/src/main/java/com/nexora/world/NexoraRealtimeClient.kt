@@ -148,7 +148,7 @@ class NexoraRealtimeClient(
     fun requestPublicRooms() = emit("rooms:list")
 
     fun sendMovement(x: Float, y: Float) {
-        emit("player:move", JSONObject().put("x", x.toDouble()).put("y", y.toDouble()))
+        emit("player:move", JSONObject().put("x", x.toDouble()).put("y", y.toDouble()), reportOffline = false)
     }
 
     fun sendChat(message: String) {
@@ -156,9 +156,12 @@ class NexoraRealtimeClient(
         if (cleaned.isNotEmpty()) emit("chat:message", JSONObject().put("message", cleaned))
     }
 
-    private fun emit(event: String, payload: JSONObject? = null) {
-        val active = socket ?: return
-        if (!active.connected()) return
+    private fun emit(event: String, payload: JSONObject? = null, reportOffline: Boolean = true) {
+        val active = socket
+        if (active?.connected() != true) {
+            if (reportOffline) listener?.onServerError("OFFLINE", "الاتصال بالخادم غير متاح حالياً")
+            return
+        }
         if (payload == null) active.emit(event) else active.emit(event, payload)
     }
 
