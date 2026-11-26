@@ -6,7 +6,7 @@ Android-first 3D social-world foundation built with Kotlin and OpenGL ES 2.0.
 
 The Android client is a local, playable 3D city exploration build with a controllable GLB character, touch joystick, orbit camera, code-driven limb motion, a 140 × 140 city area, avenues, plaza, towers, retail buildings, parks, mall/club landmarks, building collision and a bounded world. Remote movement/camera tuning is loaded from `live-config.json` and cached on device.
 
-**Important:** Android is still single-player. It is not yet connected to the backend for accounts, synchronized movement, chat, friends or private rooms.
+**Integration status:** Android now contains register/login, Socket.IO movement and room/chat client code. It still requires a deployed backend URL and two-device testing before it can be considered a verified online game.
 
 ## Android build
 
@@ -33,12 +33,11 @@ Movement is sent in normalized 0..1 coordinates derived from the 140 × 140 city
 
 The backend has a public plaza and server-owned private rooms, cryptographically random invite codes, capacity checks (2–12), host transfer, empty-room cleanup, room-scoped snapshots/chat and server-side movement bounds/speed validation. Authentication attempts are rate-limited; production requires an explicit strong `JWT_SECRET`.
 
-Accounts, online players and rooms are still in memory, and Android is not wired to this Socket.IO protocol. This is a development milestone, not a production service. See `backend/README.md`. Run dependency-free tests with `cd backend && npm test`.
+Accounts, online players and rooms are still in memory, so they disappear when the backend restarts. Android has a client for this Socket.IO protocol, but no production backend is deployed. This remains a development milestone, not a production service. See `backend/README.md`. Run dependency-free tests with `cd backend && npm test`.
 
 ## Next
 
 1. Add persistent database storage for accounts, rooms and invite-code lifecycle.
-2. Connect Android sign-in and Socket.IO room/movement/chat events.
-3. Verify two-device play, reconnect and host transfer against a deployed test server.
-4. Add friends, moderation, inventory and saved progression.
-5. Import the supplied GLB with texture handling and a rig/animation workflow.
+2. Deploy a test backend with HTTPS and verify two-device play, reconnect, movement and host transfer.
+3. Add friends, moderation, inventory and saved progression.
+4. Import the supplied GLB with texture handling and a rig/animation workflow.
