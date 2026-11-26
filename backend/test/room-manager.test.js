@@ -81,11 +81,19 @@ test("movement accepts plausible steps and rejects teleporting", () => {
   const { world, advance, now } = createManager();
   world.joinWorld("p1", "Player");
   advance(100);
-  const moved = world.movePlayer("p1", 0.60, 0.66, { now: now() });
-  assert.equal(moved.x, 0.60);
+  const moved = world.movePlayer("p1", 0.504, 0.66, { now: now() });
+  assert.equal(moved.x, 0.504);
   advance(100);
   assert.throws(() => world.movePlayer("p1", 0.95, 0.66, { now: now() }), { code: "MOVEMENT_TOO_FAST" });
-  assert.equal(world.getPlayerSnapshot("p1").x, 0.60);
+  assert.equal(world.getPlayerSnapshot("p1").x, 0.504);
+});
+
+test("movement rejects an in-bounds step faster than the 3D client can travel", () => {
+  const { world, advance, now } = createManager();
+  world.joinWorld("p1", "Player");
+  advance(100);
+  assert.throws(() => world.movePlayer("p1", 0.53, 0.66, { now: now() }), { code: "MOVEMENT_TOO_FAST" });
+  assert.equal(world.getPlayerSnapshot("p1").x, 0.5);
 });
 
 test("movement cannot use invalid or out-of-world coordinates", () => {
