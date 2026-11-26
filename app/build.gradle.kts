@@ -11,8 +11,8 @@ android {
         applicationId = "com.nexora.world"
         minSdk = 23
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
     }
 
     buildTypes {
@@ -30,5 +30,8 @@ android {
 }
 
 dependencies {
+    implementation("io.socket:socket.io-client:2.1.1") {
+        exclude(group = "org.json", module = "json")
+    }
     testImplementation("junit:junit:4.13.2")
 }
