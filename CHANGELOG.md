@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — Android social client integration
+- Added register/login UI with configurable backend URL.
+- Added AES-GCM access-token storage using Android Keystore.
+- Connected Android to the server-authoritative Socket.IO protocol.
+- Added synchronized local movement, remote avatar interpolation, room controls and room-scoped chat.
+- Added normalized city-coordinate conversion tests.
+
+
 ## 0.5.0 — Server-authoritative private rooms
 - Added server-owned public/private rooms with cryptographically random invite codes and 2–12 player capacity.
 - Added public-only room listing, host transfer and empty-room cleanup.
