@@ -6,10 +6,10 @@ export const MAX_PRIVATE_ROOM_SIZE = 12;
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_PRIVATE_ROOMS = 100;
-const MAX_MOVE_SPEED = 1.2; // normalized world units per second
-const MAX_MOVE_STEP = 0.16; // hard cap, even after a long idle period
-const MOVE_SLACK = 0.018; // absorbs small frame/network timing differences
-const MAX_MOVE_ELAPSED_SECONDS = 0.2;
+const MAX_MOVE_SPEED = 0.06; // about 8.4 city units per second
+const MAX_MOVE_STEP = 0.02; // hard cap, even after a long idle period
+const MOVE_SLACK = 0.001; // small allowance for frame/network jitter
+const MAX_MOVE_ELAPSED_SECONDS = 0.25;
 
 function cleanText(value, fallback, maxLength) {
   const cleaned = String(value ?? "")
