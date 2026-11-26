@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -22,7 +23,7 @@ class MainActivity : Activity(), NexoraRealtimeClient.Listener {
     private lateinit var statusView: TextView
     private lateinit var preferences: android.content.SharedPreferences
     private val remotePlayers = LinkedHashMap<String, NexoraRemotePlayer>()
-    private var realtime: NexoraRealtimeClient? = null
+    @Volatile private var realtime: NexoraRealtimeClient? = null
     private var serverUrl = ""
     private var playerId: String? = null
     private var username = "Explorer"
@@ -52,11 +53,11 @@ class MainActivity : Activity(), NexoraRealtimeClient.Listener {
 
         val root = FrameLayout(this)
         root.addView(gameView, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT
         ))
         root.addView(createSocialPanel(), FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.TOP or Gravity.END
         ).apply { setMargins(0, 14, 14, 0) })
@@ -98,7 +99,7 @@ class MainActivity : Activity(), NexoraRealtimeClient.Listener {
 
     private fun buttonRow(vararg buttons: Button) = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
-        buttons.forEach { addView(it, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+        buttons.forEach { addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             marginEnd = 4
         }) }
     }
