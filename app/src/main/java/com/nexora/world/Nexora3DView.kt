@@ -238,9 +238,9 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
     private var cameraY = 4f
     private var cameraZ = 10f
     private var last = System.nanoTime()
-    @Volatile private var networkEnabled = false
-    @Volatile private var localPlayerId: String? = null
-    @Volatile private var remotePlayers: List<NexoraRemotePlayer> = emptyList()
+    @Volatile private var networkActive = false
+    @Volatile private var currentLocalPlayerId: String? = null
+    @Volatile private var remotePlayerSnapshot: List<NexoraRemotePlayer> = emptyList()
     @Volatile private var pendingServerPosition: Pair<Float, Float>? = null
     @Volatile private var onLocalPosition: ((Float, Float) -> Unit)? = null
     private var lastNetworkPositionAt = 0L
@@ -249,9 +249,9 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
 
     fun setMove(x: Float, y: Float) { moveX = x; moveY = y }
     fun rotateCamera(amount: Float) { cameraYaw += amount * 4.4f }
-    fun setNetworkEnabled(enabled: Boolean) { networkEnabled = enabled }
-    fun setLocalPlayerId(playerId: String?) { localPlayerId = playerId }
-    fun setRemotePlayers(players: List<NexoraRemotePlayer>) { remotePlayers = players.toList() }
+    fun setNetworkEnabled(enabled: Boolean) { networkActive = enabled }
+    fun setLocalPlayerId(playerId: String?) { currentLocalPlayerId = playerId }
+    fun setRemotePlayers(players: List<NexoraRemotePlayer>) { remotePlayerSnapshot = players.toList() }
     fun setLocalPositionListener(listener: ((Float, Float) -> Unit)?) { onLocalPosition = listener }
     fun applyAuthoritativePosition(x: Float, y: Float) { pendingServerPosition = x to y }
 
@@ -377,7 +377,7 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
         val nextZ = pz + velocityZ * dt
         if (NexoraCityLayout.canOccupy(px, nextZ)) pz = nextZ else velocityZ = 0f
         val speed = sqrt(velocityX*velocityX + velocityZ*velocityZ)
-        if (networkEnabled && speed > .045f && now - lastNetworkPositionAt >= 100_000_000L) {
+        if (networkActive && speed > .045f && now - lastNetworkPositionAt >= 100_000_000L) {
             val normalized = NexoraWorldCoordinates.toNormalized(px, pz)
             onLocalPosition?.invoke(normalized.first, normalized.second)
             lastNetworkPositionAt = now
@@ -410,8 +410,8 @@ private class WorldRenderer(private val context: Context) : GLSurfaceView.Render
     private fun drawRemoteAvatars(dt: Float) {
         val visibleIds = HashSet<String>()
         val blend = (dt * 11f).coerceIn(0f, 1f)
-        for (player in remotePlayers) {
-            if (player.id == localPlayerId) continue
+        for (player in remotePlayerSnapshot) {
+            if (player.id == currentLocalPlayerId) continue
             visibleIds.add(player.id)
             val target = NexoraWorldCoordinates.toWorld(player.x, player.y)
             val state = remoteAvatarStates.getOrPut(player.id) {
