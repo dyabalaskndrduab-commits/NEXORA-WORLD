@@ -182,6 +182,12 @@ class MainActivity : Activity(), NexoraRealtimeClient.Listener {
             return
         }
         val normalizedUrl = endpoint.trim().trimEnd('/')
+        serverUrl = normalizedUrl
+        username = name.trim()
+        preferences.edit()
+            .putString("server_url", serverUrl)
+            .putString("username", username)
+            .apply()
         dialog.dismiss()
         statusView.text = "جارٍ الاتصال بخادم الحسابات..."
         Thread {
