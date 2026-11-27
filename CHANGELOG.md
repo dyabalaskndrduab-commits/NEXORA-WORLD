@@ -1,16 +1,11 @@
 # Changelog
 
-## 0.5.0 — Android social client and server-authoritative rooms
-- Added public and private rooms with cryptographically random invite codes, 2–12 player capacity, host transfer and empty-room cleanup.
-- Scoped player snapshots, movement broadcasts and chat to each room; added normalized movement bounds and speed validation.
-- Added authentication rate limiting, production JWT secret guard and Node.js room/socket tests.
-- Added Android register/login UI with configurable backend URL and AES-GCM token storage in Android Keystore.
-- Connected Android to Socket.IO snapshots, remote avatar rendering, authoritative movement correction, room controls and room-scoped chat.
-- Added normalized city-coordinate conversion tests.
-- The backend remains in-memory and requires deployment; two-device gameplay is not yet physically verified.
+## 0.5.1 — PostgreSQL account persistence
 
-## 0.4.0 — Expanded city districts
-- Expanded the playable ground and movement boundary to a 140 × 140 city area.
-- Added wider avenues, residential towers, retail buildings, two pocket parks and two destination landmarks.
-- Added collision-aware movement around main building footprints and extended the camera far plane.
-- Reduced per-building window geometry for mobile GPU performance.
+- Added an account-store abstraction with an in-memory development adapter and a PostgreSQL production adapter.
+- Added a transactional, versioned SQL migration for durable accounts.
+- Production now refuses to start without \`DATABASE_URL\`, PostgreSQL TLS configuration, and the migrated account table.
+- Registration and login now use the account-store adapter; PostgreSQL unique constraints handle concurrent duplicate registrations.
+- Added account-store tests and a PostgreSQL integration test that verifies login after a backend process restart.
+- CI now starts PostgreSQL, installs backend dependencies, runs the migration and persistence integration test before the Android build.
+- Active players, rooms, and chat remain ephemeral; this release does not claim to persist them.
