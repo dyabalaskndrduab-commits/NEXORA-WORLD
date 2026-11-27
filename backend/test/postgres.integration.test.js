@@ -76,8 +76,13 @@ test("PostgreSQL accounts survive a backend process restart", { skip: !databaseU
       connectionString: databaseUrl,
       ...(process.env.DATABASE_SSL === "require" ? { ssl: { rejectUnauthorized: true } } : {})
     });
-    await pool.query("DELETE FROM nexora_accounts WHERE username = $1", [username]);
-    await pool.end();
+    try {
+      await pool.query("DELETE FROM nexora_accounts WHERE username = $1", [username]);
+    } catch (error) {
+      if (error?.code !== "42P01") throw error;
+    } finally {
+      await pool.end();
+    }
   }
 });
 async function getFreePort() {
