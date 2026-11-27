@@ -52,7 +52,7 @@ Private rooms have cryptographically random eight-character invite codes and a c
 
 ## Verification
 
-Run `npm test`, then check `src/server.js`, `src/account-store.js`, and `src/migrate.js` with `node --check`. CI starts PostgreSQL, applies the migration and runs an integration test that registers an account, restarts the backend process, and logs into the same account. A real PostgreSQL instance is still required to verify deployment in the target hosting environment.
+Run `npm test`, then check `src/server.js`, `src/account-store.js`, and `src/migrate.js` with `node --check`. CI starts PostgreSQL, applies the migration before unit tests, then runs an integration test that registers an account, restarts the backend process, and logs into the same account. A real PostgreSQL instance is still required to verify deployment in the target hosting environment.
 
 ## Important limitations
 
