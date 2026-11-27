@@ -33,8 +33,8 @@ export class PostgresAccountStore {
   }
   async findByUsername(username) {
     const result = await this.pool.query(
-      \`SELECT id, username, password_hash AS "passwordHash"
-       FROM nexora_accounts WHERE username = $1 LIMIT 1\`,
+      `SELECT id, username, password_hash AS "passwordHash"
+       FROM nexora_accounts WHERE username = $1 LIMIT 1`,
       [String(username).toLowerCase()]
     );
     return result.rows[0] ?? null;
@@ -42,9 +42,9 @@ export class PostgresAccountStore {
   async create(user) {
     try {
       const result = await this.pool.query(
-        \`INSERT INTO nexora_accounts (id, username, password_hash)
+        `INSERT INTO nexora_accounts (id, username, password_hash)
          VALUES ($1, $2, $3)
-         RETURNING id, username, password_hash AS "passwordHash"\`,
+         RETURNING id, username, password_hash AS "passwordHash"`,
         [String(user.id), String(user.username).toLowerCase(), String(user.passwordHash)]
       );
       return result.rows[0];
