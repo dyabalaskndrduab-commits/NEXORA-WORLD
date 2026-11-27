@@ -39,8 +39,8 @@ jobs:
           DATABASE_SSL: disable
         run: |
           npm install --no-audit --no-fund
-          npm test
           npm run migrate
+          npm test
           npm run test:integration
           node --check src/server.js
           node --check src/account-store.js
