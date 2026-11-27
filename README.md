@@ -16,7 +16,7 @@ The backend owns player identity, room membership, invite codes, movement valida
 - JDK 17
 - Gradle 8.9
 - Build locally with `gradle testDebugUnitTest assembleDebug`.
-- GitHub Actions generates the character GLB, runs backend and Android tests, builds the debug APK and packages the source project.
+- GitHub Actions generates the character GLB, runs the database migration, backend and Android tests, builds the debug APK and packages the source project.
 
 ## Character asset
 
