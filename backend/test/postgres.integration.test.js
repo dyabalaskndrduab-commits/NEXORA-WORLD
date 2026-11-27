@@ -7,11 +7,11 @@ import { randomBytes } from "node:crypto";
 import { fileURLToPath } from "node:url";
 const databaseUrl = process.env.DATABASE_URL;
 test("PostgreSQL accounts survive a backend process restart", { skip: !databaseUrl }, async () => {
-  const username = \`nexora_\${randomBytes(5).toString("hex")}\`;
+  const username = `nexora_${randomBytes(5).toString("hex")}`;
   const password = "nexora-test-password-2026";
   const jwtSecret = "ci-only-secret-with-more-than-thirty-two-characters";
   const port = await getFreePort();
-  const baseUrl = \`http://127.0.0.1:\${port}\`;
+  const baseUrl = `http://127.0.0.1:${port}`;
   let child;
   async function startServer() {
     child = spawn(process.execPath, ["src/server.js"], {
@@ -46,9 +46,9 @@ test("PostgreSQL accounts survive a backend process restart", { skip: !databaseU
   }
   try {
     await startServer();
-    const health = await fetch(\`\${baseUrl}/health\`).then(response => response.json());
+    const health = await fetch(`${baseUrl}/health`).then(response => response.json());
     assert.equal(health.accountStorage, "postgres");
-    const registration = await fetch(\`\${baseUrl}/api/auth/register\`, {
+    const registration = await fetch(`${baseUrl}/api/auth/register`, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ username, password })
     });
@@ -57,14 +57,14 @@ test("PostgreSQL accounts survive a backend process restart", { skip: !databaseU
     assert.ok(registered.user.id);
     await stopServer();
     await startServer();
-    const login = await fetch(\`\${baseUrl}/api/auth/login\`, {
+    const login = await fetch(`${baseUrl}/api/auth/login`, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ username, password })
     });
     assert.equal(login.status, 200);
     const loggedIn = await login.json();
     assert.equal(loggedIn.user.id, registered.user.id);
-    const duplicate = await fetch(\`\${baseUrl}/api/auth/register\`, {
+    const duplicate = await fetch(`${baseUrl}/api/auth/register`, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ username, password })
     });
@@ -93,10 +93,10 @@ async function waitForHealth(url, readOutput) {
   let lastError;
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(\`\${url}/health\`);
+      const response = await fetch(`${url}/health`);
       if (response.ok) return;
     } catch (error) { lastError = error; }
     await new Promise(resolve => setTimeout(resolve, 100));
   }
-  throw new Error(\`Backend did not become healthy. \${readOutput()} \${lastError?.message || ""}\`);
+  throw new Error(`Backend did not become healthy. ${readOutput()} ${lastError?.message || ""}`);
 }
