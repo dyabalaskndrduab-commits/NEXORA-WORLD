@@ -109,10 +109,10 @@ io.on("connection", socket => {
   attachRoomSocket({ io, socket, world, player, activeSockets, online });
 });
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(\`NEXORA backend listening on \${PORT} (account storage: \${accountStore.kind})\`);
+  console.log(`NEXORA backend listening on ${PORT} (account storage: ${accountStore.kind})`);
 });
 async function shutdown(signal) {
-  console.log(\`Received \${signal}; closing NEXORA backend.\`);
+  console.log(`Received ${signal}; closing NEXORA backend.`);
   io.close();
   await accountStore.close();
   process.exit(0);
