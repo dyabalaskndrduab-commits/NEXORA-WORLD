@@ -27,12 +27,12 @@ try {
   );
   if (existing.rowCount > 0) {
     await client.query("COMMIT");
-    process.stdout.write(\`Migration \${migrationVersion} already applied.\\n\`);
+    process.stdout.write(`Migration ${migrationVersion} already applied.\\n`);
   } else {
     await client.query(migrationSql);
     await client.query("INSERT INTO nexora_schema_migrations (version) VALUES ($1)", [migrationVersion]);
     await client.query("COMMIT");
-    process.stdout.write(\`Applied migration \${migrationVersion}.\\n\`);
+    process.stdout.write(`Applied migration ${migrationVersion}.\\n`);
   }
 } catch (error) {
   await client.query("ROLLBACK");
