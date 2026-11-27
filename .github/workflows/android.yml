@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main", "automation/open-city-expansion-20261121", "automation/android-social-client-20261126" ]
+    branches: [ "main", "automation/open-city-expansion-20261121", "automation/android-social-client-20261126", "automation/postgres-account-persistence-20261127" ]
   workflow_dispatch:
 
 jobs:
